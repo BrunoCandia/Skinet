@@ -1,5 +1,6 @@
 ﻿using Core.Entities;
 using Core.Interfaces;
+using Core.Specifications;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -9,24 +10,36 @@ namespace API.Controllers
     public class ProductsController : ControllerBase
     {
         private readonly IProductRepository _productRepository;
+        private readonly IGenericRepository<Product> _genericRepository;
 
-        public ProductsController(IProductRepository productRepository)
+        public ProductsController(IProductRepository productRepository, IGenericRepository<Product> genericRepository)
         {
             _productRepository = productRepository;
+            _genericRepository = genericRepository;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts(string? brand, string? type, string? sort)
         {
-            var products = await _productRepository.GetProductsAsync(brand, type, sort);
+            var spec = new ProductFilterSortPaginationSpecification(brand, type, sort);
+
+            var products = await _genericRepository.GetEntitiesWithSpecAsync(spec);
 
             return Ok(products);
         }
 
+        ////[HttpGet]
+        ////public async Task<ActionResult<IEnumerable<Product>>> GetProducts(string? brand, string? type, string? sort)
+        ////{
+        ////    var products = await _productRepository.GetProductsAsync(brand, type, sort);
+
+        ////    return Ok(products);
+        ////}
+
         [HttpGet("{id:Guid}")]
         public async Task<ActionResult<Product>> GetProduct(Guid id)
         {
-            var product = await _productRepository.GetProductByIdAsync(id);
+            var product = await _genericRepository.GetByIdAsync(id);
 
             if (product is null)
             {
@@ -44,9 +57,9 @@ namespace API.Controllers
                 return BadRequest();
             }
 
-            await _productRepository.AddProductAsync(product);
+            await _genericRepository.AddAsync(product);
 
-            if (await _productRepository.SaveChangesAsync())
+            if (await _genericRepository.SaveChangesAsync())
             {
                 return CreatedAtAction("GetProduct", new { id = product.Id }, product);
             }
@@ -62,9 +75,9 @@ namespace API.Controllers
                 return BadRequest("Cannot update this product");
             }
 
-            _productRepository.UpdateProduct(product);
+            _genericRepository.Update(product);
 
-            if (await _productRepository.SaveChangesAsync())
+            if (await _genericRepository.SaveChangesAsync())
             {
                 return NoContent();
             }
@@ -75,7 +88,7 @@ namespace API.Controllers
         [HttpDelete("{id:Guid}")]
         public async Task<ActionResult> DeleteProduct(Guid id)
         {
-            var product = await _productRepository.GetProductByIdAsync(id);
+            var product = await _genericRepository.GetByIdAsync(id);
 
             if (product is null)
             {
@@ -84,7 +97,7 @@ namespace API.Controllers
 
             _productRepository.DeleteProduct(product);
 
-            if (await _productRepository.SaveChangesAsync())
+            if (await _genericRepository.SaveChangesAsync())
             {
                 return NoContent();
             }
@@ -95,7 +108,9 @@ namespace API.Controllers
         [HttpGet("brands")]
         public async Task<ActionResult<IReadOnlyList<string>>> GetBrands()
         {
-            var brands = await _productRepository.GetBrandsAsync();
+            var spec = new BrandListSpecification();
+
+            var brands = await _genericRepository.GetEntitiesWithSpecAsync(spec);
 
             return Ok(brands);
         }
@@ -103,14 +118,32 @@ namespace API.Controllers
         [HttpGet("types")]
         public async Task<ActionResult<IReadOnlyList<string>>> GetTypes()
         {
-            var types = await _productRepository.GetTypesAsync();
+            var spec = new TypeListSpecification();
+
+            var types = await _genericRepository.GetEntitiesWithSpecAsync(spec);
 
             return Ok(types);
         }
 
+        ////[HttpGet("brands")]
+        ////public async Task<ActionResult<IReadOnlyList<string>>> GetBrands()
+        ////{
+        ////    var brands = await _productRepository.GetBrandsAsync();
+
+        ////    return Ok(brands);
+        ////}
+
+        ////[HttpGet("types")]
+        ////public async Task<ActionResult<IReadOnlyList<string>>> GetTypes()
+        ////{
+        ////    var types = await _productRepository.GetTypesAsync();
+
+        ////    return Ok(types);
+        ////}
+
         private async Task<bool> ProductExistsAsync(Guid id)
         {
-            return await _productRepository.ProductExistsAsync(id);
+            return await _genericRepository.ExistsAsync(id);
         }
     }
 }
