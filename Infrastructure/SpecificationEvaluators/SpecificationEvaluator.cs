@@ -29,6 +29,11 @@ namespace Infrastructure.SpecificationEvaluators
                 query = query.Distinct();
             }
 
+            if (spec.IsPagingEndabled)
+            {
+                query = query.Skip(spec.Skip).Take(spec.Take);
+            }
+
             return query;
         }
 
@@ -59,6 +64,11 @@ namespace Infrastructure.SpecificationEvaluators
             if (spec.IsDistinct)
             {
                 selectQuery = selectQuery?.Distinct();
+            }
+
+            if (spec.IsPagingEndabled)
+            {
+                selectQuery = selectQuery?.Skip(spec.Skip).Take(spec.Take);
             }
 
             return selectQuery ?? query.Cast<TResult>();

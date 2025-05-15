@@ -20,6 +20,15 @@ namespace Infrastructure.Repositories
             await _storeContext.Set<T>().AddAsync(entity);
         }
 
+        public async Task<int> CountAsync(ISpecification<T> spec)
+        {
+            var query = _storeContext.Set<T>().AsQueryable();
+
+            query = spec.ApplyCriteria(query);
+
+            return await query.CountAsync();
+        }
+
         public void Delete(T entity)
         {
             _storeContext.Set<T>().Remove(entity);

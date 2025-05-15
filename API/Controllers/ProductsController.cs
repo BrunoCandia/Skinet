@@ -5,9 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ProductsController : ControllerBase
+    public class ProductsController : BaseApiController
     {
         private readonly IProductRepository _productRepository;
         private readonly IGenericRepository<Product> _genericRepository;
@@ -19,13 +17,19 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts(string? brand, string? type, string? sort)
+        public async Task<ActionResult<IEnumerable<Product>>> GetProducts([FromQuery] ProductSpecParams productSpecParams)
         {
-            var spec = new ProductFilterSortPaginationSpecification(brand, type, sort);
+            var spec = new ProductFilterSortPaginationSpecification(productSpecParams);
 
-            var products = await _genericRepository.GetEntitiesWithSpecAsync(spec);
+            ////var products = await _genericRepository.GetEntitiesWithSpecAsync(spec);
 
-            return Ok(products);
+            ////var totalCount = await _genericRepository.CountAsync(spec);
+
+            ////var pagination = new Pagination<Product>(productSpecParams.PageIndex, productSpecParams.PageSize, totalCount, products);
+
+            ////return Ok(pagination);
+
+            return await CreatePagedResult(_genericRepository, spec, productSpecParams.PageIndex, productSpecParams.PageSize);
         }
 
         ////[HttpGet]
