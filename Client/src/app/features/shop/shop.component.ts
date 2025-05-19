@@ -8,26 +8,31 @@ import { FiltersDialogComponent } from './filters-dialog/filters-dialog.componen
 import { ProductItemComponent } from './product-item/product-item.component';
 import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
 import { MatListOption, MatSelectionList, MatSelectionListChange } from '@angular/material/list';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { ShopParams } from '../../shared/models/shopParams';
+import { Pagination } from '../../shared/models/pagination';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-shop',
-  imports: [ProductItemComponent, MatButton, MatIcon, MatMenu, MatMenuTrigger, MatSelectionList, MatListOption],
+  imports: [ProductItemComponent, MatButton, MatIcon, MatMenu, MatMenuTrigger, MatSelectionList, MatListOption, MatPaginator, FormsModule],
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.scss'
 })
 export class ShopComponent implements OnInit {
-
-  products: Product[] = [];
+  products?: Pagination<Product>;
   types: string[] = [];
   brands: string[] = [];
-  selectedTypes: string[] = [];
-  selectedBrands: string[] = [];
-  selectedSort: string = 'name';
+  // selectedTypes: string[] = [];
+  // selectedBrands: string[] = [];
+  // selectedSort: string = 'name';
   sortOptions = [
     { name: 'Alphabetical', value: 'name' },
     { name: 'Price: Low-High', value: 'priceAsc' },
     { name: 'Price: High-Low', value: 'priceDesc' },
   ];
+  shopParams = new ShopParams();
+  pageSizeOptions = [5, 10, 15, 20];
   
   constructor(private shopService: ShopService, private dialogService: MatDialog) {}
   
@@ -48,8 +53,8 @@ export class ShopComponent implements OnInit {
   }
 
   getProducts() {
-    this.shopService.getProducts(this.selectedBrands, this.selectedTypes, this.selectedSort).subscribe({
-      next: response => {this.products = response.data},
+    this.shopService.getProducts(this.shopParams).subscribe({
+      next: response => {this.products = response},
       error: error => console.error(error)
     })
   }
@@ -58,8 +63,10 @@ export class ShopComponent implements OnInit {
     console.log('Opening dialog with:', {
       brands: this.brands,
       types: this.types,
-      selectedBrands: this.selectedBrands,
-      selectedTypes: this.selectedTypes
+      selectedBrands: this.shopParams.brands,
+      selectedTypes: this.shopParams.types
+      // selectedBrands: this.selectedBrands,
+      // selectedTypes: this.selectedTypes
     });
 
     const dialogRef = this.dialogService.open(
@@ -68,9 +75,11 @@ export class ShopComponent implements OnInit {
         minWidth: '500px',
         data: {
           brands: this.brands,                  
-          types: this.types,                    
-          selectedBrands: this.selectedBrands,
-          selectedTypes: this.selectedTypes
+          types: this.types,
+          selectedBrands: this.shopParams.brands,
+          selectedTypes: this.shopParams.types      
+          // selectedBrands: this.selectedBrands,
+          // selectedTypes: this.selectedTypes
         }
       });
 
@@ -78,9 +87,11 @@ export class ShopComponent implements OnInit {
       next: result => {
         if (result) {
           console.log(result);
-          this.selectedBrands = result.selectedBrands;
-          this.selectedTypes = result.selectedTypes;
-
+          this.shopParams.brands = result.selectedBrands;
+          this.shopParams.types = result.selectedTypes;
+          // this.selectedBrands = result.selectedBrands;
+          // this.selectedTypes = result.selectedTypes;
+          this.shopParams.pageIndex = 1; // Reset to first page
           this.getProducts();
         }
       }
@@ -91,8 +102,21 @@ export class ShopComponent implements OnInit {
     const selectedOption = event.options[0];
 
     if (selectedOption) {
-      this.selectedSort = selectedOption.value;      
+      //this.selectedSort = selectedOption.value;
+      this.shopParams.sort = selectedOption.value;
+      this.shopParams.pageIndex = 1; // Reset to first page
       this.getProducts();
     }
+  }
+
+  onSearchChange() {
+    this.shopParams.pageIndex = 1; // Reset to first page
+    this.getProducts();
+  }
+
+  handlePageEvent($event: PageEvent) {
+    this.shopParams.pageIndex = $event.pageIndex + 1;
+    this.shopParams.pageSize = $event.pageSize;
+    this.getProducts()
   }
 }
