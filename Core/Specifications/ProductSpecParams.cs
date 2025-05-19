@@ -33,7 +33,7 @@
         #endregion
 
         #region Paging
-        private const int MaxPageSize = 10;
+        private const int MaxPageSize = 20;
 
         public int PageIndex { get; set; } = 1;
 
