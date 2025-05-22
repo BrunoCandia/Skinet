@@ -5,6 +5,7 @@ import { CurrencyPipe } from '@angular/common';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
+import { ShoppingCartService } from '../../../core/services/shopping-cart.service';
 
 @Component({
   selector: 'app-product-item',
@@ -13,5 +14,12 @@ import { RouterLink } from '@angular/router';
   styleUrl: './product-item.component.scss'
 })
 export class ProductItemComponent {
+
   @Input() product?: Product;
+
+  constructor(private shoppingCartService: ShoppingCartService) {}
+
+  addItemToShoppingCart(product: Product) {
+    this.shoppingCartService.addItemToShoppingcart(product);
+  }
 }

@@ -5,6 +5,7 @@ import { MatBadge } from '@angular/material/badge';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { BusyService } from '../../core/services/busy.service';
+import { ShoppingCartService } from '../../core/services/shopping-cart.service';
 
 @Component({
   selector: 'app-header',
@@ -17,7 +18,11 @@ export class HeaderComponent {
   get isLoading() {
     return this.busyService.loading();
   }
+
+  get itemCount() {
+    return this.shoppingCartService.itemCount();
+  }
   
-  constructor(private busyService: BusyService) { }
+  constructor(private busyService: BusyService, private shoppingCartService: ShoppingCartService) { }
       
 }
