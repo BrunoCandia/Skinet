@@ -1,4 +1,4 @@
-
+To run redis
 docker compose up -d
 
 add-migration Initial-Migration -StartupProject API -Project Infrastructure
