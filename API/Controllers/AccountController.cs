@@ -74,7 +74,7 @@ namespace API.Controllers
             });
         }
 
-        [HttpGet]
+        [HttpGet("auth-status")]
         public ActionResult GetAuthenticationState()
         {
             return Ok(new { IsAuthenticated = User.Identity?.IsAuthenticated ?? false });
