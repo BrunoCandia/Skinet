@@ -1,0 +1,21 @@
+<div class="w-full">
+    <mat-radio-group 
+        class="grid grid-cols-2 gap-4" 
+        [value]="selectedMethodDelivery?.id" 
+        (change)="updateDeliveryMethod($event.value)">
+        @for (deliveryMethod of deliveryMethods; track deliveryMethod.id) {
+            <label class="p-3 border border-gray-200 cursor-pointer w-full h-full hover:bg-purple-100">
+                <mat-radio-button
+                     class="w-full h-full"
+                     [value]="deliveryMethod"
+                     [checked]="selectedMethodDelivery === deliveryMethod"
+                >
+                    <div class="flex flex-col w-full h-full">
+                        <strong>{{deliveryMethod.shortName}} - {{deliveryMethod.price | currency}}</strong>
+                        <span class="text-sm">{{deliveryMethod.description}}</span>
+                    </div>
+                </mat-radio-button>
+            </label>
+        }
+    </mat-radio-group>
+</div>

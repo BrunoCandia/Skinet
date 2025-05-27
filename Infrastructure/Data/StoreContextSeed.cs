@@ -22,6 +22,22 @@ namespace Infrastructure.Data
 
                 await storeContext.SaveChangesAsync();
             }
+
+            if (!storeContext.DeliveryMethods.Any())
+            {
+                var deliveryMethodsData = await File.ReadAllTextAsync("../Infrastructure/Data/SeedData/delivery.json");
+
+                var deliveryMethods = JsonSerializer.Deserialize<List<DeliveryMethod>>(deliveryMethodsData);
+
+                if (deliveryMethods is null)
+                {
+                    return;
+                }
+
+                await storeContext.DeliveryMethods.AddRangeAsync(deliveryMethods);
+
+                await storeContext.SaveChangesAsync();
+            }
         }
     }
 }

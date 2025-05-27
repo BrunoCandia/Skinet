@@ -34,6 +34,8 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(config =>
 });
 builder.Services.AddSingleton<IShoppingCartService, ShoppingCartService>();
 
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+
 builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<User>()
                 .AddEntityFrameworkStores<StoreContext>();

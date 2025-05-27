@@ -6,7 +6,7 @@ import { MatIcon } from '@angular/material/icon';
 import { MatInput } from '@angular/material/input';
 import { RouterLink } from '@angular/router';
 import { ShoppingCartService } from '../../../core/services/shopping-cart.service';
-import { CurrencyPipe } from '@angular/common';
+import { CurrencyPipe, Location } from '@angular/common';
 
 @Component({
   selector: 'app-order-summary',
@@ -15,6 +15,10 @@ import { CurrencyPipe } from '@angular/common';
   styleUrl: './order-summary.component.scss'
 })
 export class OrderSummaryComponent {
+
+  get locationPath() {
+    return this.location.path();
+  }
 
   get subtotal() {
     return this.shoppingCartService.totals()?.subtotal;
@@ -32,12 +36,13 @@ export class OrderSummaryComponent {
     return this.shoppingCartService.totals()?.total;
   }
 
-  constructor(private shoppingCartService: ShoppingCartService) {}
+  constructor(private shoppingCartService: ShoppingCartService, private location: Location) {}
 
   removeCouponCode() {
-  throw new Error('Method not implemented.');
+    
   }
+
   applyCouponCode() {
-  throw new Error('Method not implemented.');
+    
   }
 }
