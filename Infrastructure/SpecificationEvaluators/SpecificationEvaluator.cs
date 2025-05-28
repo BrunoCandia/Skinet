@@ -1,5 +1,6 @@
 ﻿using Core.Entities;
 using Core.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.SpecificationEvaluators
 {
@@ -33,6 +34,11 @@ namespace Infrastructure.SpecificationEvaluators
             {
                 query = query.Skip(spec.Skip).Take(spec.Take);
             }
+
+            // for eager loading
+            query = spec.Includes.Aggregate(query, (current, include) => current.Include(include));
+
+            query = spec.IncludesStrings.Aggregate(query, (current, include) => current.Include(include));
 
             return query;
         }

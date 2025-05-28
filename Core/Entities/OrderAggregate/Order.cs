@@ -20,5 +20,10 @@
 
         // Navigation property to related entities
         public IReadOnlyList<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
+        public decimal GetTotal()
+        {
+            return Subtotal + DeliveryMethod.Price;
+        }
     }
 }

@@ -34,6 +34,10 @@ namespace Core.Specifications
             private set;
         }
 
+        public List<Expression<Func<T, object>>> Includes { get; } = new List<Expression<Func<T, object>>>();
+
+        public List<string> IncludesStrings { get; } = new List<string>();
+
         public bool IsDistinct
         {
             get;
@@ -54,6 +58,16 @@ namespace Core.Specifications
         protected void AddOrderByDescending(Expression<Func<T, object>> orderByDescendingExpression)
         {
             OrderByDescending = orderByDescendingExpression;
+        }
+
+        protected void AddIncludes(Expression<Func<T, object>> includeExpression)
+        {
+            Includes.Add(includeExpression);
+        }
+
+        protected void AddIncludes(string includeString)
+        {
+            IncludesStrings.Add(includeString);
         }
 
         protected void ApplyDistinct()

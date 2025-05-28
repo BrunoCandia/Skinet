@@ -9,11 +9,13 @@ namespace API.Controllers
     {
         private readonly IPaymentService _paymentService;
         private readonly IGenericRepository<DeliveryMethod> _deliveryMethodRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public PaymentsController(IPaymentService paymentService, IGenericRepository<DeliveryMethod> deliveryMethodRepository)
+        public PaymentsController(IPaymentService paymentService, IGenericRepository<DeliveryMethod> deliveryMethodRepository, IUnitOfWork unitOfWork)
         {
             _paymentService = paymentService;
             _deliveryMethodRepository = deliveryMethodRepository;
+            _unitOfWork = unitOfWork;
         }
 
         [Authorize]
@@ -33,7 +35,7 @@ namespace API.Controllers
         [HttpGet("delivery-methods")]
         public async Task<ActionResult<IReadOnlyList<DeliveryMethod>>> GetDeliveryMethods()
         {
-            var deliveryMethods = await _deliveryMethodRepository.GetAllAsync();
+            var deliveryMethods = await _unitOfWork.Repository<DeliveryMethod>().GetAllAsync();
 
             if (deliveryMethods is null || !deliveryMethods.Any())
             {
@@ -42,5 +44,36 @@ namespace API.Controllers
 
             return Ok(deliveryMethods);
         }
+
+        #region Without Unit of Work        
+
+        ////[Authorize]
+        ////[HttpPost("{shoppingCartId}")]
+        ////public async Task<ActionResult<ShoppingCart>> CreateOrUpdatePaymentIntent([FromRoute] string shoppingCartId)
+        ////{
+        ////    var shoppingCart = await _paymentService.CreateOrUpdatePaymentIntentAsync(shoppingCartId);
+
+        ////    if (shoppingCart is null)
+        ////    {
+        ////        return BadRequest("Problem creating or updating the payment intent");
+        ////    }
+
+        ////    return Ok(shoppingCart);
+        ////}
+
+        ////[HttpGet("delivery-methods")]
+        ////public async Task<ActionResult<IReadOnlyList<DeliveryMethod>>> GetDeliveryMethods()
+        ////{
+        ////    var deliveryMethods = await _deliveryMethodRepository.GetAllAsync();
+
+        ////    if (deliveryMethods is null || !deliveryMethods.Any())
+        ////    {
+        ////        return NotFound("No delivery methods found");
+        ////    }
+
+        ////    return Ok(deliveryMethods);
+        ////}
+
+        #endregion
     }
 }

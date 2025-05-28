@@ -1,4 +1,5 @@
-﻿using Core.Interfaces;
+﻿using Core.Entities;
+using Core.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Stripe;
 using Entities = Core.Entities;
@@ -11,17 +12,20 @@ namespace Infrastructure.Services
         private readonly IShoppingCartService _shoppingCartService;
         private readonly IGenericRepository<Entities.Product> _productRepository;
         private readonly IGenericRepository<Entities.DeliveryMethod> _deliveMethodRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
         public PaymentService(
             IConfiguration configuration,
             IShoppingCartService shoppingCartService,
             IGenericRepository<Entities.Product> productRepository,
-            IGenericRepository<Entities.DeliveryMethod> deliveMethodRepository)
+            IGenericRepository<Entities.DeliveryMethod> deliveMethodRepository,
+            IUnitOfWork unitOfWork)
         {
             _configuration = configuration;
             _shoppingCartService = shoppingCartService;
             _productRepository = productRepository;
             _deliveMethodRepository = deliveMethodRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Entities.ShoppingCart?> CreateOrUpdatePaymentIntentAsync(string shoppingCartId)
@@ -39,7 +43,8 @@ namespace Infrastructure.Services
 
             if (shoppingCart.DeliveryMethodId.HasValue)
             {
-                var deliveryMethod = await _deliveMethodRepository.GetByIdAsync(shoppingCart.DeliveryMethodId.Value);
+                var deliveryMethod = await _unitOfWork.Repository<DeliveryMethod>().GetByIdAsync(shoppingCart.DeliveryMethodId.Value);
+                ////var deliveryMethod = await _deliveMethodRepository.GetByIdAsync(shoppingCart.DeliveryMethodId.Value);
 
                 if (deliveryMethod is null)
                 {
@@ -51,7 +56,8 @@ namespace Infrastructure.Services
 
             foreach (var item in shoppingCart.Items)
             {
-                var product = await _productRepository.GetByIdAsync(item.ProductId);
+                var product = await _unitOfWork.Repository<Entities.Product>().GetByIdAsync(item.ProductId);
+                ////var product = await _productRepository.GetByIdAsync(item.ProductId);
 
                 if (product is null)
                 {
