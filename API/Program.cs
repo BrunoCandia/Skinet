@@ -1,4 +1,5 @@
 using API.Middleware;
+using API.SignalR;
 using Core.Entities;
 using Core.Interfaces;
 using Infrastructure.Data;
@@ -19,6 +20,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<StoreContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.EnableSensitiveDataLogging();
 });
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
@@ -38,6 +40,8 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(config =>
 builder.Services.AddSingleton<IShoppingCartService, ShoppingCartService>();
 
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+
+builder.Services.AddSignalR();
 
 builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<User>()
@@ -62,12 +66,16 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.MapGroup("api")
    .MapIdentityApi<User>();
+
+app.MapHub<NotificationHub>("/hub/notifications");
 
 try
 {

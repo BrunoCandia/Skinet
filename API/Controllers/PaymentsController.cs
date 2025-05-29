@@ -1,7 +1,13 @@
-﻿using Core.Entities;
+﻿using API.Extensions;
+using API.SignalR;
+using Core.Entities;
+using Core.Entities.OrderAggregate;
 using Core.Interfaces;
+using Core.Specifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Stripe;
 
 namespace API.Controllers
 {
@@ -10,12 +16,29 @@ namespace API.Controllers
         private readonly IPaymentService _paymentService;
         private readonly IGenericRepository<DeliveryMethod> _deliveryMethodRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ILogger<PaymentsController> _logger;
+        private readonly IConfiguration _configuration;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
-        public PaymentsController(IPaymentService paymentService, IGenericRepository<DeliveryMethod> deliveryMethodRepository, IUnitOfWork unitOfWork)
+        private readonly string _whSecret = string.Empty;
+
+        public PaymentsController(IPaymentService paymentService, IGenericRepository<DeliveryMethod> deliveryMethodRepository, IUnitOfWork unitOfWork, ILogger<PaymentsController> logger, IConfiguration configuration, IHubContext<NotificationHub> hubContext)
         {
-            _paymentService = paymentService;
-            _deliveryMethodRepository = deliveryMethodRepository;
-            _unitOfWork = unitOfWork;
+            _paymentService = paymentService ?? throw new ArgumentNullException(nameof(paymentService));
+            _deliveryMethodRepository = deliveryMethodRepository ?? throw new ArgumentNullException(nameof(deliveryMethodRepository));
+            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
+
+            var whSecret = _configuration["StripeSettings:WhSecret"];
+
+            if (string.IsNullOrWhiteSpace(whSecret))
+            {
+                throw new InvalidOperationException("StripeSettings:WhSecret is not configured.");
+            }
+
+            _whSecret = whSecret;
         }
 
         [Authorize]
@@ -43,6 +66,87 @@ namespace API.Controllers
             }
 
             return Ok(deliveryMethods);
+        }
+
+        [HttpPost("webhook")]
+        public async Task<IActionResult> StripeWebhook()
+        {
+            var json = await new StreamReader(Request.Body).ReadToEndAsync();
+
+            try
+            {
+                var stripeEvent = ConstructStripeEvent(json);
+
+                if (stripeEvent.Data.Object is not PaymentIntent intent)
+                {
+                    return BadRequest("Invalid event data");
+                }
+
+                await HandlePaymentIntentSucceededAsync(intent);
+
+                _logger.LogInformation("HandlePaymentIntentSucceededAsync executed succesfully");
+
+                return Ok();
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogError(ex, "Stripe webhook error occurred");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Stripe webhook error occurred");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected error occurred");
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred");
+            }
+        }
+
+        private Event ConstructStripeEvent(string json)
+        {
+            try
+            {
+                var stripeEvent = EventUtility.ConstructEvent(json, Request.Headers["Stripe-Signature"], _whSecret);
+
+                return stripeEvent;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to construct stripe event");
+                throw new StripeException("Invalid signature");
+            }
+        }
+
+        private async Task HandlePaymentIntentSucceededAsync(PaymentIntent intent)
+        {
+            if (intent.Status == "succeeded")
+            {
+                var spec = new OrderSpecification(intent.Id, true);
+
+                var order = await _unitOfWork.Repository<Order>().GetEntityWithSpecAsync(spec);
+
+                if (order is null)
+                {
+                    throw new Exception("Order not found");
+                }
+
+                if ((long)order.GetTotal() * 100 != intent.Amount)
+                {
+                    order.Status = OrderStatus.PaymentMismatch;
+                }
+                else
+                {
+                    order.Status = OrderStatus.PaymentReceived;
+                }
+
+                await _unitOfWork.CompleteAsync();
+
+                // SignalR to notify the user in the client side
+                var connectionId = NotificationHub.GetConnectionIdByEmail(order.BuyerEmail);
+
+                if (!string.IsNullOrWhiteSpace(connectionId))
+                {
+                    await _hubContext.Clients.Client(connectionId).SendAsync("OrderCompleteNotification", order.ToDto());
+                }
+            }
         }
 
         #region Without Unit of Work        

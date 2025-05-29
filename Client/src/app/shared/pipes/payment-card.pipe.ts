@@ -12,10 +12,10 @@ export class PaymentCardPipe implements PipeTransform {
         const {brand, last4, exp_month, exp_year} = (value as ConfirmationToken['payment_method_preview']).card!
 
         return `${brand.toUpperCase()} **** **** **** ${last4}, Exp: ${exp_month}/${exp_year}`;
-      } else if (value && 'last4' in value) {
-          const {brand, last4, expMonth, expYear} = value as PaymentSummary;
+      } else if (value && 'last4' in value) { //Only PaymentSummary has last4
+          const {brand, last4, expirationMonth, expirationYear} = value as PaymentSummary;
           
-          return `${brand.toUpperCase()} **** **** **** ${last4}, Exp: ${expMonth}/${expYear}`;
+          return `${brand.toUpperCase()} **** **** **** ${last4}, Exp: ${expirationMonth}/${expirationYear}`;
       } 
       
       return 'Unknown payment method';

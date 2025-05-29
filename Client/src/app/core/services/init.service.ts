@@ -1,14 +1,15 @@
 import { Injectable } from '@angular/core';
 import { ShoppingCartService } from './shopping-cart.service';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, tap } from 'rxjs';
 import { AccountService } from './account.service';
+import { SignalrService } from './signalr.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InitService {
 
-  constructor(private shoppingCartService: ShoppingCartService, private accountService: AccountService) { }
+  constructor(private shoppingCartService: ShoppingCartService, private accountService: AccountService, private signalrService: SignalrService) { }
 
   init() {
     const shoppingCartId = localStorage.getItem('shoppingCartId');
@@ -17,6 +18,13 @@ export class InitService {
     return forkJoin({
       shoppingCart: shoppingCart$,
       user: this.accountService.getUserInfo()
+              .pipe(
+                tap(user => {
+                  if (user) {
+                    this.signalrService.createHubConnection();
+                  }
+                })
+              )
     });
   }
 }

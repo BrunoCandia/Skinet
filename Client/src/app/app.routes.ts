@@ -1,17 +1,20 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
+import { emptyShoppingCartGuard } from './core/guards/empty-shopping-cart.guard';
+import { orderCompleteGuard } from './core/guards/order-complete.guard';
+import { LoginComponent } from './features/account/login/login.component';
+import { RegisterComponent } from './features/account/register/register.component';
+import { CheckoutSuccessComponent } from './features/checkout/checkout-success/checkout-success.component';
+import { CheckoutComponent } from './features/checkout/checkout.component';
 import { HomeComponent } from './features/home/home.component';
-import { ShopComponent } from './features/shop/shop.component';
+import { OrderDetailsComponent } from './features/orders/order-details/order-details.component';
+import { OrderComponent } from './features/orders/order.component';
 import { ProductDetailsComponent } from './features/shop/product-details/product-details.component';
+import { ShopComponent } from './features/shop/shop.component';
+import { ShoppingCartComponent } from './features/shopping-cart/shopping-cart.component';
 import { TestErrorComponent } from './features/test-error/test-error.component';
 import { NotFoundComponent } from './shared/components/not-found/not-found.component';
 import { ServerErrorComponent } from './shared/components/server-error/server-error.component';
-import { ShoppingCartComponent } from './features/shopping-cart/shopping-cart.component';
-import { CheckoutComponent } from './features/checkout/checkout.component';
-import { LoginComponent } from './features/account/login/login.component';
-import { RegisterComponent } from './features/account/register/register.component';
-import { authGuard } from './core/guards/auth.guard';
-import { emptyShoppingCartGuard } from './core/guards/empty-shopping-cart.guard';
-import { CheckoutSuccessComponent } from './features/checkout/checkout-success/checkout-success.component';
 
 export const routes: Routes = [
     {path: '', component: HomeComponent},
@@ -19,7 +22,9 @@ export const routes: Routes = [
     {path: 'shop/:id', component: ProductDetailsComponent},
     {path: 'shopping-cart', component: ShoppingCartComponent},
     {path: 'checkout', component: CheckoutComponent, canActivate: [authGuard, emptyShoppingCartGuard]},
-    {path: 'checkout/success', component: CheckoutSuccessComponent, canActivate: [authGuard]},
+    {path: 'checkout/success', component: CheckoutSuccessComponent, canActivate: [authGuard, orderCompleteGuard]},
+    {path: 'orders', component: OrderComponent, canActivate: [authGuard]},
+    {path: 'orders/:id', component: OrderDetailsComponent, canActivate: [authGuard]},
     {path: 'account/login', component: LoginComponent},
     {path: 'account/register', component: RegisterComponent},
     {path: 'test-error', component: TestErrorComponent},

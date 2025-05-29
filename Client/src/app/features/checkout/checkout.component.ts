@@ -1,21 +1,23 @@
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
-import { OrderSummaryComponent } from "../../shared/components/order-summary/order-summary.component";
-import { MatStepper, MatStepperModule } from '@angular/material/stepper';
-import { MatButton } from '@angular/material/button';
-import { Router, RouterLink } from '@angular/router';
-import { StripeService } from '../../core/services/stripe.service';
-import { ConfirmationToken, StripeAddressElement, StripeAddressElementChangeEvent, StripePaymentElement, StripePaymentElementChangeEvent } from '@stripe/stripe-js';
-import { SnackbarService } from '../../core/services/snackbar.service';
-import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox'
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
-import { Address } from '../../shared/models/address';
-import { AccountService } from '../../core/services/account.service';
+import { CurrencyPipe, JsonPipe } from '@angular/common';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { MatButton } from '@angular/material/button';
+import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatStepper, MatStepperModule } from '@angular/material/stepper';
+import { Router, RouterLink } from '@angular/router';
+import { ConfirmationToken, StripeAddressElement, StripeAddressElementChangeEvent, StripePaymentElement, StripePaymentElementChangeEvent } from '@stripe/stripe-js';
 import { firstValueFrom } from 'rxjs';
+import { AccountService } from '../../core/services/account.service';
+import { ShoppingCartService } from '../../core/services/shopping-cart.service';
+import { SnackbarService } from '../../core/services/snackbar.service';
+import { StripeService } from '../../core/services/stripe.service';
+import { OrderSummaryComponent } from "../../shared/components/order-summary/order-summary.component";
+import { Address } from '../../shared/models/address';
 import { CheckoutDeliveryComponent } from "./checkout-delivery/checkout-delivery.component";
 import { CheckoutReviewComponent } from "./checkout-review/checkout-review.component";
-import { ShoppingCartService } from '../../core/services/shopping-cart.service';
-import { CurrencyPipe, JsonPipe } from '@angular/common';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'
+import { Order, OrderToCreate, ShippingAddress } from '../../shared/models/order';
+import { OrderService } from '../../core/services/order.service';
 
 @Component({
   selector: 'app-checkout',
@@ -37,7 +39,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return this.shoppingCartService.totals()?.total;
   }
 
-  constructor(private stripeService: StripeService, private snackbarService: SnackbarService, private accountService: AccountService, private shoppingCartService: ShoppingCartService, private router: Router) {
+  constructor(private stripeService: StripeService, private snackbarService: SnackbarService, private accountService: AccountService, private shoppingCartService: ShoppingCartService, private router: Router, private orderService: OrderService) {
     // Option 1, manually bind in the constructor the function to the class
     //this.handleAddressChange = this.handleAddressChange.bind(this);
   }    
@@ -93,7 +95,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     if (event.selectedIndex === 1) {
       if (this.isSavedAsDefaultAddress) {
         //const address = await this.addressElement?.getValue();
-        const address = await this.getAddressFormStripeAddress();
+        const address = await this.getAddressFromStripeAddress() as Address;
         
         address && firstValueFrom(this.accountService.updateAddress(address))
 
@@ -119,16 +121,35 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       if (this.confirmationToken) {
         const result = await this.stripeService.confirmPayment(this.confirmationToken);
 
-        if (result.error) {
+        if (result.paymentIntent?.status === 'succeeded') {
+          // Consider the case: the payment was done but the order creation failed then what should we do?
+          const order = await this.createOrderModel();
+          const orderResult = await firstValueFrom(this.orderService.createOrder(order));
+
+          if (orderResult) {
+            this.orderService.orderComplete = true;
+            this.shoppingCartService.deleteShoppingCart();
+            this.shoppingCartService.selectedDeliveryMethod.set(null);
+            this.router.navigateByUrl('checkout/success');
+          } else {
+            throw new Error('Order creation failed');
+          }
+        } else if (result.error) {
           throw new Error(result.error.message);
         } else {
-          this.shoppingCartService.deleteShoppingCart();
-          this.shoppingCartService.selectedDeliveryMethod.set(null);
-          this.router.navigateByUrl('checkout/success');
+          throw new Error('Something went wrong');
         }
+
+        // if (result.error) {
+        //   throw new Error(result.error.message);
+        // } else {
+        //   this.shoppingCartService.deleteShoppingCart();
+        //   this.shoppingCartService.selectedDeliveryMethod.set(null);
+        //   this.router.navigateByUrl('checkout/success');
+        // }
       }
     } catch (error: any) {
-      this.snackbarService.error(error.message || 'Something wnet wrong');
+      this.snackbarService.error(error.message || 'Something went wrong');
       stepper.previous();
     } finally {
       this.loading = false;
@@ -153,12 +174,37 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     }    
   }
 
-  private async getAddressFormStripeAddress(): Promise<Address | null> {
+  private async createOrderModel(): Promise<OrderToCreate> {
+    const shoppingCart = this.shoppingCartService.shoppingCart();
+    const shippingAddress = await this.getAddressFromStripeAddress() as ShippingAddress;
+    const card = this.confirmationToken?.payment_method_preview.card;
+
+    if (!shoppingCart?.id || !shoppingCart?.deliveryMethodId || !card || !shippingAddress) {
+      throw new Error('Problem creating order');
+    }
+
+    const order: OrderToCreate = {
+      shoppingCartId: shoppingCart.id,
+      paymentSummary: {
+        last4: +card.last4,
+        brand: card.brand,
+        expirationMonth: card.exp_month,
+        expirationYear: card.exp_year
+      },
+      deliveryMethodId: shoppingCart.deliveryMethodId,
+      shippingAddress
+    };
+
+    return order;
+  }
+
+  private async getAddressFromStripeAddress(): Promise<Address | ShippingAddress | null> {
     const result = await this.addressElement?.getValue();
     const address = result?.value.address;
 
     if (address) {
       return {
+        name: result.value.name,
         line1: address.line1,
         line2: address.line2 || undefined,
         city: address.city,
