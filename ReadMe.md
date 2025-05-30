@@ -1,5 +1,11 @@
-To run redis
+User
+Tom@test.com
+Pa$$w0rd
+
+To run redis locally
 docker compose up -d
+
+Entity Framework
 
 add-migration Initial-Migration -StartupProject API -Project Infrastructure
 update-database 0 -StartupProject API -Project Infrastructure (para revertir la primer migracion impactada en la BD)
@@ -38,3 +44,30 @@ stripe listen --forward-to https://localhost:7130/api/payments/webhook -e paymen
 
 > 
 Ready! You are using Stripe API Version [2025-04-30.basil]. Your webhook signing secret is whsec_97a59df44d7bdee883a100e614854673fba09a5dcc296adae7b1c7ca061c0a44
+
+Upstash
+
+"Redis": "host:port, password=pw,ssl=true,abortConnect=False"
+"Redis": "just-asp-27676.upstash.io:6379,password=AWwcAAIjcDFlMDAzYTRhYjUwN2I0NDJiYjM1NTI1YWJmNWJkZWQ3MnAxMA,ssl=True,abortConnect=False"
+"Redis": "SkinetTest.redis.cache.windows.net:6380,password=nZCeSltOMQGqR87fO8pANdfSSbWIVqD3NAzCaF38id4=,ssl=True,abortConnect=False"
+
+"Redis": "just-asp-27676.upstash.io:6379,password=AWwcAAIjcDFlMDAzYTRhYjUwN2I0NDJiYjM1NTI1YWJmNWJkZWQ3MnAxMA,ssl=True,abortConnect=False"
+
+Connect to your database (Redis)
+redis-cli --tls -u redis://default:AWwcAAIjcDFlMDAzYTRhYjUwN2I0NDJiYjM1NTI1YWJmNWJkZWQ3MnAxMA@just-asp-27676.upstash.io:6379
+
+Azure
+
+"Redis": "redis-skinet.redis.cache.windows.net:6380,password=jOvRE0sodqSUYu6i01QkvgO3XWYm6xkgjAzCaM4WF8s=,ssl=True,abortConnect=False"
+
+Azure SQL Server
+
+Database name: Skinet
+
+Server name: skinet-server-name
+Server admin login: appuser
+Pass: Pa$$w0rd
+
+Stripe
+
+Your webhook signing secret for deployed app is: whsec_F0NmeyVCLLlqSACKALoNPIfhbXBddVgh

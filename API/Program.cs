@@ -29,14 +29,44 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(config =>
 {
+    ////var env = builder.Environment;
+
+    ////var redisConnectionString = env.IsDevelopment() ? "RedisDev" : "RedisProd";
+
+    ////var connectionString = builder.Configuration.GetConnectionString(redisConnectionString);
+
     var connectionString = builder.Configuration.GetConnectionString("Redis");
+
+    Console.WriteLine("Redis: " + connectionString);
 
     if (string.IsNullOrWhiteSpace(connectionString)) throw new Exception("Cannot get redis connection string");
 
     var configuration = ConfigurationOptions.Parse(connectionString, true);
+    ////configuration.IncludePerformanceCountersInExceptions = true;
+    ////configuration.IncludeDetailInExceptions = true;
 
-    return ConnectionMultiplexer.Connect(configuration);
+    ////return ConnectionMultiplexer.Connect(configuration);
+
+    var multiplexer = ConnectionMultiplexer.Connect(configuration);
+
+    ////multiplexer.ConnectionFailed += (s, e) =>
+    ////{
+    ////    Console.WriteLine($"ConnectionFailed: {e.EndPoint} – {e.FailureType} – {e.Exception?.Message}");
+    ////};
+
+    ////multiplexer.InternalError += (s, e) =>
+    ////{
+    ////    Console.WriteLine($"InternalError: {e.Exception?.Message}");
+    ////};
+
+    ////multiplexer.ConfigurationChanged += (s, e) =>
+    ////{
+    ////    Console.WriteLine($"Config changed: {e.EndPoint}");
+    ////};
+
+    return multiplexer;
 });
+
 builder.Services.AddSingleton<IShoppingCartService, ShoppingCartService>();
 
 builder.Services.AddScoped<IPaymentService, PaymentService>();
@@ -70,12 +100,18 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
+app.UseDefaultFiles();
+
+app.UseStaticFiles();
+
 app.MapControllers();
 
 app.MapGroup("api")
    .MapIdentityApi<User>();
 
 app.MapHub<NotificationHub>("/hub/notifications");
+
+app.MapFallbackToController("Index", "Fallback");
 
 try
 {
