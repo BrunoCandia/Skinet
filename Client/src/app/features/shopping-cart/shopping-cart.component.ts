@@ -4,6 +4,7 @@ import { ShoppingCartItem } from '../../shared/models/shoppingCart';
 import { ShoppingCartItemComponent } from "./shopping-cart-item/shopping-cart-item.component";
 import { OrderSummaryComponent } from "../../shared/components/order-summary/order-summary.component";
 import { EmptyStateComponent } from "../../shared/components/empty-state/empty-state.component";
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-shopping-cart',
@@ -17,6 +18,9 @@ export class ShoppingCartComponent {
     return this.shoppingCartService.shoppingCart()?.items;
   }
   
-  constructor(private shoppingCartService: ShoppingCartService) {}
+  constructor(private shoppingCartService: ShoppingCartService, private router: Router) {}
    
+  navigate() {
+    this.router.navigateByUrl('/shop');
+  }
 }
