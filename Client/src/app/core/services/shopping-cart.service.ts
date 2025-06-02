@@ -3,8 +3,9 @@ import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { ShoppingCart, ShoppingCartItem } from '../../shared/models/shoppingCart';
 import { Product } from '../../shared/models/product';
-import { map } from 'rxjs';
+import { firstValueFrom, map, tap } from 'rxjs';
 import { DeliveryMethod } from '../../shared/models/deliveryMethod';
+import { Coupon } from '../../shared/models/coupon';
 
 @Injectable({
   providedIn: 'root'
@@ -26,12 +27,23 @@ export class ShoppingCartService {
     } else {
       const subtotal = shoppingCart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const shipping = deliveryMethod ? deliveryMethod.price : 0;
-      const discount = 0;
-      const total = subtotal + shipping - discount;
+      
+      let discountValue = 0;
+
+      if (shoppingCart.coupon) {
+        if (shoppingCart.coupon.amountOff) {
+          discountValue = shoppingCart.coupon.amountOff;
+        } else if (shoppingCart.coupon.percentOff) {
+          discountValue = subtotal * (shoppingCart.coupon.percentOff / 100);
+        }
+      }
+
+      const total = subtotal + shipping - discountValue;
+
       return {
         subtotal,
         shipping,
-        discount,
+        discountValue,
         total
       };
     }
@@ -56,13 +68,21 @@ export class ShoppingCartService {
   //   });
   // }
 
-  // TODO: Review if the subscription can be done in the component
   setShoppingCart(shoppingCart: ShoppingCart) {
-    return this.httpClient.post<ShoppingCart>(this.baseUrl + 'shoppingCart', shoppingCart).subscribe({
-      next: shoppingCart => this.shoppingCart.set(shoppingCart),
-      error: error => console.log(error)
-    });
-  }
+    return this.httpClient.post<ShoppingCart>(this.baseUrl + 'shoppingCart', shoppingCart)
+      .pipe(
+        tap({ 
+          next: shoppingCart => this.shoppingCart.set(shoppingCart),
+          error: error => console.log(error)
+    }))
+  };  
+  
+  // setShoppingCart(shoppingCart: ShoppingCart) {
+  //   return this.httpClient.post<ShoppingCart>(this.baseUrl + 'shoppingCart', shoppingCart).subscribe({
+  //     next: shoppingCart => this.shoppingCart.set(shoppingCart),
+  //     error: error => console.log(error)
+  //   });
+  // }
 
   // TODO: Review if the subscription can be done in the component
   deleteShoppingCart() {
@@ -74,7 +94,11 @@ export class ShoppingCartService {
     });
   }
 
-  addItemToShoppingcart(item: ShoppingCartItem | Product, quantity = 1) {
+  applyDiscount(code: string) {
+    return this.httpClient.get<Coupon>(this.baseUrl + 'coupons/' + code);
+  }
+
+  async addItemToShoppingcart(item: ShoppingCartItem | Product, quantity = 1) {
     const shoppingCart = this.shoppingCart() ?? this.createShoppingCart();
 
     if (this.isProduct(item)) {
@@ -83,10 +107,10 @@ export class ShoppingCartService {
 
     shoppingCart.items = this.addOrUpdateItem(shoppingCart.items, item, quantity);
 
-    this.setShoppingCart(shoppingCart);
+    await firstValueFrom(this.setShoppingCart(shoppingCart));
   }
 
-  removeItemFromShoppingCart(productId: string, quantity = 1) {
+  async removeItemFromShoppingCart(productId: string, quantity = 1) {
     const shoppingCart = this.shoppingCart();
 
     if (!shoppingCart) {
@@ -106,7 +130,7 @@ export class ShoppingCartService {
       if (shoppingCart.items.length === 0) {
         this.deleteShoppingCart();
       } else {
-        this.setShoppingCart(shoppingCart);
+        await firstValueFrom(this.setShoppingCart(shoppingCart));
       }
     } else {
       console.log('Item not found in shopping cart');

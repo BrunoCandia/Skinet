@@ -71,6 +71,8 @@ namespace API.Controllers
         [HttpPost("webhook")]
         public async Task<IActionResult> StripeWebhook()
         {
+            _logger.LogInformation("StripeWebhook started");
+
             var json = await new StreamReader(Request.Body).ReadToEndAsync();
 
             try
@@ -97,6 +99,10 @@ namespace API.Controllers
             {
                 _logger.LogError(ex, "An unexpected error occurred");
                 return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred");
+            }
+            finally
+            {
+                _logger.LogInformation("StripeWebhook finished");
             }
         }
 
@@ -128,7 +134,9 @@ namespace API.Controllers
                     throw new Exception("Order not found");
                 }
 
-                if ((long)order.GetTotal() * 100 != intent.Amount)
+                var orderTotalInCents = (long)Math.Round(order.GetTotal() * 100, MidpointRounding.AwayFromZero);
+
+                if (orderTotalInCents != intent.Amount)
                 {
                     order.Status = OrderStatus.PaymentMismatch;
                 }
@@ -141,10 +149,12 @@ namespace API.Controllers
 
                 // SignalR to notify the user in the client side
                 var connectionId = NotificationHub.GetConnectionIdByEmail(order.BuyerEmail);
+                Console.WriteLine("HandlePaymentIntentSucceededAsync executed: " + connectionId);
 
                 if (!string.IsNullOrWhiteSpace(connectionId))
                 {
                     await _hubContext.Clients.Client(connectionId).SendAsync("OrderCompleteNotification", order.ToDto());
+                    Console.WriteLine("OrderCompleteNotification sent to the client" + order.ToDto());
                 }
             }
         }

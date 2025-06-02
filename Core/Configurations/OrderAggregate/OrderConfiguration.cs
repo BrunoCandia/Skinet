@@ -11,6 +11,7 @@ namespace Core.Configurations.OrderAggregate
             builder.HasKey(p => p.Id);
             builder.Property(p => p.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
             builder.Property(p => p.Subtotal).HasColumnType("decimal(18,2)");
+            builder.Property(p => p.Discount).HasColumnType("decimal(18,2)");
             builder.Property(p => p.BuyerEmail).HasMaxLength(256);
             builder.Property(p => p.PaymentIntentId).HasMaxLength(256);
 

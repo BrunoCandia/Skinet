@@ -4,6 +4,7 @@ import { CheckoutService } from '../../../core/services/checkout.service';
 import { DeliveryMethod } from '../../../shared/models/deliveryMethod';
 import { CurrencyPipe } from '@angular/common';
 import { ShoppingCartService } from '../../../core/services/shopping-cart.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-checkout-delivery',
@@ -41,13 +42,13 @@ export class CheckoutDeliveryComponent implements OnInit {
     });
   }
 
-  updateDeliveryMethod(deliveryMethod: DeliveryMethod) {
+  async updateDeliveryMethod(deliveryMethod: DeliveryMethod) {
     this.shoppingCartService.selectedDeliveryMethod.set(deliveryMethod);
 
     const shoppingCart = this.shoppingCartService.shoppingCart();
     if (shoppingCart) {
       shoppingCart.deliveryMethodId = deliveryMethod.id;
-      this.shoppingCartService.setShoppingCart(shoppingCart);
+      await firstValueFrom(this.shoppingCartService.setShoppingCart(shoppingCart));
       this.deliveryComplete.emit(true);
     }
   }

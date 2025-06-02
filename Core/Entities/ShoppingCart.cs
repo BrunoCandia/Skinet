@@ -7,6 +7,7 @@
         public Guid? DeliveryMethodId { get; set; }
         public string? ClientSecret { get; set; }
         public string? PaymentIntentId { get; set; }
+        public Coupon? Coupon { get; set; } = null!;
     }
 }
 

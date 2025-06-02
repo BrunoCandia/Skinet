@@ -25,5 +25,6 @@ export class CheckoutSuccessComponent implements OnDestroy {
   ngOnDestroy(): void {
     this.orderService.orderComplete = false;
     this.signalrService.orderSignal.set(null);
+    console.log('ngOnDestroy executed in CheckoutSuccessComponent');
   }
 }

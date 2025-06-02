@@ -26,6 +26,7 @@ export class SignalrService {
     this.hubConnection.on('OrderCompleteNotification', (order: Order) => {
       // Used in the checkout-success.component
       this.orderSignal.set(order);
+      console.log('OrderSignal set: ' + order);
     });
   }
 

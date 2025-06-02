@@ -12,7 +12,7 @@ update-database 0 -StartupProject API -Project Infrastructure (para revertir la 
 update-database -StartupProject API
 remove-migration -StartupProject API -Project Infrastructure
 
-Stripe
+Test Stripe locally
 
 1-
 stripe login
@@ -40,6 +40,7 @@ Done! The Stripe CLI is configured for New business sandbox with account id acct
 Please note: this key will expire after 90 days, at which point you'll need to re-authenticate.
 
 3-
+Run this command to test strpie locally
 stripe listen --forward-to https://localhost:7130/api/payments/webhook -e payment_intent.succeeded
 
 > 

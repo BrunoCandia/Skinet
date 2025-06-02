@@ -1,11 +1,11 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ConfirmationToken, loadStripe, Stripe, StripeAddressElement, StripeAddressElementOptions, StripeElements, StripePaymentElement } from '@stripe/stripe-js';
-import { environment } from '../../../environments/environment';
-import { HttpClient } from '@angular/common/http';
-import { ShoppingCartService } from './shopping-cart.service';
-import { ShoppingCart } from '../../shared/models/shoppingCart';
 import { firstValueFrom, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ShoppingCart } from '../../shared/models/shoppingCart';
 import { AccountService } from './account.service';
+import { ShoppingCartService } from './shopping-cart.service';
 
 @Injectable({
   providedIn: 'root'
@@ -95,7 +95,7 @@ export class StripeService {
     if (stripe) {
       return await stripe.createConfirmationToken({elements});
     } else {
-      throw new Error('Stripe not available');
+      throw new Error('Stripe not available in createConfirmationToken');
     }
   }
 
@@ -109,6 +109,7 @@ export class StripeService {
     }
 
     const clientSecret = this.shoppingCartService.shoppingCart()?.clientSecret;
+    console.log('Client secret in confirmPayment: ' + clientSecret);
 
     if (stripe && clientSecret) {
       return await stripe.confirmPayment({
@@ -119,23 +120,42 @@ export class StripeService {
         redirect: 'if_required'
       });
     } else {
-      throw new Error('Stripe not available');
+      throw new Error('Stripe not available in confirmPayment');
     }
   }
 
   createOrUpdatePaymentIntent() {
     const shoppingCart = this.shoppingCartService.shoppingCart();
+    const hasClientSecret = !!shoppingCart?.clientSecret;
+
+    console.log('Client secret in createOrUpdatePaymentIntent: ' + shoppingCart?.clientSecret);
 
     if (!shoppingCart) throw new Error('Problem with shopping cart');
 
     return this.httpClient.post<ShoppingCart>(this.baseUrl + 'payments/' + shoppingCart.id, {})
       .pipe(
-        map(shoppingCart => {
-          this.shoppingCartService.setShoppingCart(shoppingCart);
-          //this.shoppingCartService.shoppingCart.set(shoppingCart);
+        map(async shoppingCart => {
+          if (hasClientSecret) {
+            await firstValueFrom(this.shoppingCartService.setShoppingCart(shoppingCart));
+            //this.shoppingCartService.shoppingCart.set(shoppingCart);
+            return shoppingCart;
+          }
+          
           return shoppingCart;
         })
       );
+
+    //  const cart = this.cartService.cart();
+    // const hasClientSecret = !!cart?.clientSecret;
+    // if (!cart) throw new Error('Problem with cart');
+    // return this.http.post<Cart>(this.baseUrl + 'payments/' + cart.id, {}).pipe(
+    //   map(async cart => {
+    //     if (!hasClientSecret) {
+    //       await firstValueFrom(this.cartService.setCart(cart));
+    //       return cart;
+    //     }
+    //     return cart;
+    //   }))
   }
 
   async createPaymentElement() {

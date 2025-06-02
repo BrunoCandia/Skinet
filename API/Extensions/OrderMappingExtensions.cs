@@ -27,6 +27,7 @@ namespace API.Extensions
                 ShippingAddress = order.ShippingAddress.ToDto(),
                 PaymentSummary = order.PaymentSummary.ToDto(),
                 Subtotal = order.Subtotal,
+                Discount = order.Discount,
                 Total = order.GetTotal(),
                 Status = (OrderStatusDto)order.Status,
                 StatusString = order.Status.ToString(),
@@ -54,6 +55,7 @@ namespace API.Extensions
                 ShippingAddress = orderDto.ShippingAddress.ToEntity(),
                 PaymentSummary = orderDto.PaymentSummary.ToEntity(),
                 Subtotal = orderDto.Subtotal,
+                Discount = orderDto.Discount,
                 Status = (OrderStatus)orderDto.Status,
                 OrderItems = orderDto.OrderItems.Select(orderItem => orderItem.ToEntity()).ToList()
             };

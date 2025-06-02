@@ -17,6 +17,7 @@
 
         // Regular properties
         public decimal Subtotal { get; set; }
+        public decimal Discount { get; set; }
         public OrderStatusDto Status { get; set; }
         public required string StatusString { get; set; }
         public required string PaymentIntentId { get; set; }

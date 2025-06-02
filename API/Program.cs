@@ -71,6 +71,8 @@ builder.Services.AddSingleton<IShoppingCartService, ShoppingCartService>();
 
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
+builder.Services.AddScoped<ICouponService, CouponService>();
+
 builder.Services.AddSignalR();
 
 builder.Services.AddAuthorization();

@@ -15,6 +15,7 @@
 
         // Regular properties
         public decimal Subtotal { get; set; }
+        public decimal Discount { get; set; }
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
         public required string PaymentIntentId { get; set; }
 
@@ -23,7 +24,7 @@
 
         public decimal GetTotal()
         {
-            return Subtotal + DeliveryMethod.Price;
+            return Subtotal + DeliveryMethod.Price - Discount;
         }
     }
 }

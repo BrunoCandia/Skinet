@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
+import { Coupon } from './coupon';
 
 export type ShoppingCartType = {
     id: string;
@@ -24,4 +25,5 @@ export class ShoppingCart implements ShoppingCartType {
     deliveryMethodId?: string;
     clientSecret?: string;
     paymentIntentId?: string;
+    coupon?: Coupon;
 }
