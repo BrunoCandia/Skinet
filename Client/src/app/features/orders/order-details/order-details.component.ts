@@ -7,6 +7,8 @@ import { MatButton } from '@angular/material/button';
 import { AddressPipe } from "../../../shared/pipes/address.pipe";
 import { PaymentCardPipe } from "../../../shared/pipes/payment-card.pipe";
 import { CurrencyPipe, DatePipe } from '@angular/common';
+import { AccountService } from '../../../core/services/account.service';
+import { AdminService } from '../../../core/services/admin.service';
 
 @Component({
   selector: 'app-order-details',
@@ -17,26 +19,46 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 export class OrderDetailsComponent implements OnInit {
 
   order?: Order;
-  buttonText = 'Return to orders';
+  buttonText: string = '';
+  //buttonText = this.accountService.isAdmin() ? 'Return to Admin' : 'Return to orders';
 
-  constructor(private orderService: OrderService, private activatedRoute: ActivatedRoute, private router: Router) {}
+  constructor(private orderService: OrderService, private activatedRoute: ActivatedRoute, private router: Router, private accountService: AccountService, private adminService: AdminService) {}
   
   ngOnInit(): void {
-    this.loadOrder();        
+    this.buttonText = this.accountService.isAdmin() ? 'Return to Admin' : 'Return to orders';
+
+    this.loadOrder();
   }
 
   loadOrder() {
     const id = this.activatedRoute.snapshot.paramMap.get('id');
 
     if (id) {
-      this.orderService.getOrderForUser(id).subscribe({
+      
+      const loadOrderData = this.accountService.isAdmin()
+      ? this.adminService.getOrder(id)
+      : this.orderService.getOrderForUser(id);
+
+      loadOrderData.subscribe({
         next: order => this.order = order,
-        error: error => console.log(error)        
-      })
-    }
+        error: error => console.log(error)
+      });
+    }    
+
+    // if (id) {
+    //   this.orderService.getOrderForUser(id).subscribe({
+    //     next: order => this.order = order,
+    //     error: error => console.log(error)        
+    //   })
+    // }
   }
 
   onReturnClick() {
-    this.router.navigateByUrl('/orders');
+
+    this.accountService.isAdmin()
+      ? this.router.navigateByUrl('/admin')
+      : this.router.navigateByUrl('/orders');
+
+    //this.router.navigateByUrl('/orders');
   }
 }

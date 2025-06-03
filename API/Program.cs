@@ -6,6 +6,7 @@ using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
 using Infrastructure.UnitOfWork;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 
@@ -77,6 +78,7 @@ builder.Services.AddSignalR();
 
 builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<User>()
+                .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<StoreContext>();
 
 builder.Services.AddCors();
@@ -120,10 +122,12 @@ try
     using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
     var storeContext = services.GetRequiredService<StoreContext>();
+    var userManager = services.GetRequiredService<UserManager<User>>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
     await storeContext.Database.MigrateAsync();
 
-    await StoreContextSeed.SeedAsync(storeContext);
+    await StoreContextSeed.SeedAsync(storeContext, userManager, roleManager);
 }
 catch (Exception ex)
 {

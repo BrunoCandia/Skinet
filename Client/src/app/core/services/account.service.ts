@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { User } from '../../shared/models/user';
 import { map, tap } from 'rxjs';
@@ -12,6 +12,13 @@ export class AccountService {
 
   baseUrl = environment.apiUrl;
   currentUser = signal<User | null>(null);
+  isAdmin = computed(() => {
+    const roles = this.currentUser()?.roles;
+
+    console.log('Roles: ' + roles);
+
+    return Array.isArray(roles) ? roles.includes('Admin') : roles === 'Admin';
+  });
 
   constructor(private httpClient: HttpClient, private signalrService: SignalrService) { }
 

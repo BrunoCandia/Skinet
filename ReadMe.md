@@ -2,6 +2,10 @@ User
 Tom@test.com
 Pa$$w0rd
 
+Admin
+admin@test.com
+Pa$$w0rd
+
 To run redis locally
 docker compose up -d
 

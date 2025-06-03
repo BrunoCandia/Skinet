@@ -1,6 +1,6 @@
 ﻿namespace Core.Specifications
 {
-    public class ProductSpecParams
+    public class ProductSpecParams : PagingParams
     {
         #region Filtering
         private List<string> _brands = new List<string>();
@@ -33,17 +33,17 @@
         #endregion
 
         #region Paging
-        private const int MaxPageSize = 20;
+        ////private const int MaxPageSize = 20;
 
-        public int PageIndex { get; set; } = 1;
+        ////public int PageIndex { get; set; } = 1;
 
-        private int _pageSize = 6;
+        ////private int _pageSize = 6;
 
-        public int PageSize
-        {
-            get => _pageSize;
-            set => _pageSize = (value > MaxPageSize) ? MaxPageSize : value;
-        }
+        ////public int PageSize
+        ////{
+        ////    get => _pageSize;
+        ////    set => _pageSize = (value > MaxPageSize) ? MaxPageSize : value;
+        ////}
         #endregion
 
         #region Serching

@@ -46,6 +46,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         snackbarService.error(err.error.title || err.error);
       }
 
+      if (err.status === 403) {        
+        snackbarService.error('Forbidden');
+      }
+
       if (err.status === 404) {
         router.navigateByUrl('/not-found');
       }

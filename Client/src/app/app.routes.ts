@@ -1,9 +1,11 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from './core/guards/admin.guard';
 import { authGuard } from './core/guards/auth.guard';
 import { emptyShoppingCartGuard } from './core/guards/empty-shopping-cart.guard';
 import { orderCompleteGuard } from './core/guards/order-complete.guard';
 import { LoginComponent } from './features/account/login/login.component';
 import { RegisterComponent } from './features/account/register/register.component';
+import { AdminComponent } from './features/admin/admin.component';
 import { CheckoutSuccessComponent } from './features/checkout/checkout-success/checkout-success.component';
 import { CheckoutComponent } from './features/checkout/checkout.component';
 import { HomeComponent } from './features/home/home.component';
@@ -30,5 +32,6 @@ export const routes: Routes = [
     {path: 'test-error', component: TestErrorComponent},
     {path: 'not-found', component: NotFoundComponent},
     {path: 'server-error', component: ServerErrorComponent},
+    {path: 'admin', component: AdminComponent, canActivate: [authGuard, adminGuard]},
     {path: '**', redirectTo: 'not-found', pathMatch: 'full'},
 ];

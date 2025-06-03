@@ -26,11 +26,27 @@ namespace Infrastructure.Services
             _productRepository = productRepository;
             _deliveMethodRepository = deliveMethodRepository;
             _unitOfWork = unitOfWork;
+
+            StripeConfiguration.ApiKey = _configuration["StripeSettings:SecretKey"];
+        }
+
+        public async Task<string> RefundPaymentAsync(string paymentIntentId)
+        {
+            var refundOptions = new RefundCreateOptions
+            {
+                PaymentIntent = paymentIntentId
+            };
+
+            var refundService = new RefundService();
+
+            var result = await refundService.CreateAsync(refundOptions);
+
+            return result.Status;
         }
 
         public async Task<ShoppingCart?> CreateOrUpdatePaymentIntentAsync(string shoppingCartId)
         {
-            StripeConfiguration.ApiKey = _configuration["StripeSettings:SecretKey"];
+            ////StripeConfiguration.ApiKey = _configuration["StripeSettings:SecretKey"];
 
             var shoppingCart = await _shoppingCartService.GetShoppingCartAsync(shoppingCartId) ?? throw new Exception("Shopping Cart unavailable");
 
