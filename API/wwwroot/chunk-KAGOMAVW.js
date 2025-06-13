@@ -1,0 +1,1 @@
+import{qa as o,r as e}from"./chunk-F3T4JLSM.js";import{ia as r}from"./chunk-RCVRDAM3.js";var g=(c,t)=>{let n=r(o),i=r(e);return n.currentUser()?(console.log("User is logged in"),!0):(i.navigate(["/account/login"],{queryParams:{returnUrl:t.url}}),console.log("User is not logged in, redirecting to login page"),!1)};export{g as a};
