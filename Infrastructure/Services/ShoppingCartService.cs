@@ -13,7 +13,7 @@ namespace Infrastructure.Services
         public ShoppingCartService(IConnectionMultiplexer redis)
         {
             _redis = redis;
-            _database = redis.GetDatabase();
+            _database = _redis.GetDatabase();
         }
 
         public async Task<bool> DeleteShoppingCartAsync(string key)

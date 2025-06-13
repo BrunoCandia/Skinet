@@ -69,6 +69,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(config =>
 });
 
 builder.Services.AddSingleton<IShoppingCartService, ShoppingCartService>();
+builder.Services.AddSingleton<IResponseCacheService, ResponseCacheService>();
 
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
