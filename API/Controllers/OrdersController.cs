@@ -22,11 +22,11 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<OrderDto>> CreateOrder(CreateOrderDto createOrderDto)
+        public async Task<ActionResult<OrderDto>> CreateOrder(CreateOrderDto createOrderDto, CancellationToken cancellationToken)
         {
             var email = User.GetUserEmail();
 
-            var shoppingCart = await _shoppingCartService.GetShoppingCartAsync(createOrderDto.ShoppingCartId);
+            var shoppingCart = await _shoppingCartService.GetShoppingCartAsync(createOrderDto.ShoppingCartId, cancellationToken);
 
             if (shoppingCart is null || shoppingCart.Items.Count == 0)
             {
@@ -42,7 +42,7 @@ namespace API.Controllers
 
             foreach (var item in shoppingCart.Items)
             {
-                var productItem = await _unitOfWork.Repository<Product>().GetByIdAsync(item.ProductId);
+                var productItem = await _unitOfWork.Repository<Product>().GetByIdAsync(item.ProductId, cancellationToken);
 
                 if (productItem is null)
                 {
@@ -66,7 +66,7 @@ namespace API.Controllers
                 orderItems.Add(orderItem);
             }
 
-            var deliveryMethod = await _unitOfWork.Repository<DeliveryMethod>().GetByIdAsync(createOrderDto.DeliveryMethodId);
+            var deliveryMethod = await _unitOfWork.Repository<DeliveryMethod>().GetByIdAsync(createOrderDto.DeliveryMethodId, cancellationToken);
 
             if (deliveryMethod is null)
             {
@@ -84,11 +84,11 @@ namespace API.Controllers
                 BuyerEmail = email
             };
 
-            await _unitOfWork.Repository<Order>().AddAsync(order);
+            await _unitOfWork.Repository<Order>().AddAsync(order, cancellationToken);
 
             var test = order.ToDto();
 
-            if (await _unitOfWork.CompleteAsync())
+            if (await _unitOfWork.CompleteAsync(cancellationToken))
             {
                 return Ok(order.ToDto());
             }
@@ -97,11 +97,11 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<OrderDto>>> GetOrderForUser()
+        public async Task<ActionResult<IReadOnlyList<OrderDto>>> GetOrderForUser(CancellationToken cancellationToken)
         {
             var spec = new OrderSpecification(User.GetUserEmail());
 
-            var orders = await _unitOfWork.Repository<Order>().GetEntitiesWithSpecAsync(spec);
+            var orders = await _unitOfWork.Repository<Order>().GetEntitiesWithSpecAsync(spec, cancellationToken);
 
             var ordersDto = orders.Select(x => x.ToDto()).ToList();
 
@@ -109,11 +109,11 @@ namespace API.Controllers
         }
 
         [HttpGet("{id:Guid}")]
-        public async Task<ActionResult<OrderDto>> GetOrderById(Guid id)
+        public async Task<ActionResult<OrderDto>> GetOrderById(Guid id, CancellationToken cancellationToken)
         {
             var spec = new OrderSpecification(User.GetUserEmail(), id);
 
-            var order = await _unitOfWork.Repository<Order>().GetEntityWithSpecAsync(spec);
+            var order = await _unitOfWork.Repository<Order>().GetEntityWithSpecAsync(spec, cancellationToken);
 
             if (order is null)
             {

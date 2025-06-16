@@ -8,38 +8,38 @@ namespace API.Controllers
     public class BuggyController : BaseApiController
     {
         [HttpGet("unauthorized")]
-        public IActionResult GetUnauthorized()
+        public IActionResult GetUnauthorized(CancellationToken cancellationToken)
         {
             return Unauthorized();
         }
 
         [HttpGet("bad-request")]
-        public IActionResult GetBadRequest()
+        public IActionResult GetBadRequest(CancellationToken cancellationToken)
         {
             return BadRequest("Not a good request");
         }
 
         [HttpGet("not-found")]
-        public IActionResult GetNotFound()
+        public IActionResult GetNotFound(CancellationToken cancellationToken)
         {
             return NotFound();
         }
 
         [HttpGet("internal-error")]
-        public IActionResult GetInternalError()
+        public IActionResult GetInternalError(CancellationToken cancellationToken)
         {
             throw new Exception("This is a test exception");
         }
 
         [HttpPost("validation-error")]
-        public IActionResult GetValidationError(CreateProductDto createProductDto)
+        public IActionResult GetValidationError(CreateProductDto createProductDto, CancellationToken cancellationToken)
         {
             return Ok();
         }
 
         [Authorize]
         [HttpGet("secret")]
-        public IActionResult GetSecret()
+        public IActionResult GetSecret(CancellationToken cancellationToken)
         {
             var name = User.FindFirst(ClaimTypes.Name)?.Value;
             var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -49,7 +49,7 @@ namespace API.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpGet("admin-secret")]
-        public IActionResult GetAdminSecret()
+        public IActionResult GetAdminSecret(CancellationToken cancellationToken)
         {
             var name = User.FindFirst(ClaimTypes.Name)?.Value;
             var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

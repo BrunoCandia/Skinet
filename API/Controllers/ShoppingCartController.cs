@@ -14,9 +14,9 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<ShoppingCart>> GetShoppingCart(string id)
+        public async Task<ActionResult<ShoppingCart>> GetShoppingCart(string id, CancellationToken cancellationToken)
         {
-            var shoppingCart = await _shoppingCartService.GetShoppingCartAsync(id);
+            var shoppingCart = await _shoppingCartService.GetShoppingCartAsync(id, cancellationToken);
 
             var result = shoppingCart ?? new ShoppingCart { Id = id };
 
@@ -24,9 +24,9 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ShoppingCart>> UpdateShoppingCart(ShoppingCart shoppingCart)
+        public async Task<ActionResult<ShoppingCart>> UpdateShoppingCart(ShoppingCart shoppingCart, CancellationToken cancellationToken)
         {
-            var updateShoppingCart = await _shoppingCartService.SetShoppingCartAsync(shoppingCart);
+            var updateShoppingCart = await _shoppingCartService.SetShoppingCartAsync(shoppingCart, cancellationToken);
 
             if (updateShoppingCart is null)
             {
@@ -37,9 +37,9 @@ namespace API.Controllers
         }
 
         [HttpDelete]
-        public async Task<ActionResult> DeleteShoppingCart(string id)
+        public async Task<ActionResult> DeleteShoppingCart(string id, CancellationToken cancellationToken)
         {
-            var deleted = await _shoppingCartService.DeleteShoppingCartAsync(id);
+            var deleted = await _shoppingCartService.DeleteShoppingCartAsync(id, cancellationToken);
 
             if (!deleted)
             {

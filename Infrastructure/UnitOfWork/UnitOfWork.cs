@@ -3,6 +3,7 @@ using Core.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using System.Collections.Concurrent;
+using System.Threading;
 
 namespace Infrastructure.UnitOfWork
 {
@@ -16,9 +17,9 @@ namespace Infrastructure.UnitOfWork
             _storeContext = storeContext;
         }
 
-        public async Task<bool> CompleteAsync()
+        public async Task<bool> CompleteAsync(CancellationToken cancellationToken = default)
         {
-            return await _storeContext.SaveChangesAsync() > 0;
+            return await _storeContext.SaveChangesAsync(cancellationToken) > 0;
         }
 
         public void Dispose()
@@ -33,12 +34,6 @@ namespace Infrastructure.UnitOfWork
                 var repositoryType = typeof(GenericRepository<>).MakeGenericType(typeof(TEntity));
                 return Activator.CreateInstance(repositoryType, _storeContext) ?? throw new InvalidOperationException($"Could not create repository for type {typeof(TEntity).Name}");
             });
-
-            ////return (IGenericRepository<TEntity>)_repositories.GetOrAdd(typeof(TEntity).Name, type =>
-            ////{
-            ////    var repositoryType = typeof(GenericRepository<>).MakeGenericType(typeof(TEntity));
-            ////    return Activator.CreateInstance(repositoryType, _storeContext) ?? throw new InvalidOperationException($"Could not create repository for type {type}");
-            ////});
         }
     }
 }

@@ -18,7 +18,7 @@ namespace API.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult> Register(RegisterDto registerDto)
+        public async Task<ActionResult> Register(RegisterDto registerDto, CancellationToken cancellationToken)
         {
             var user = new User
             {
@@ -45,7 +45,7 @@ namespace API.Controllers
 
         [Authorize]
         [HttpPost("logout")]
-        public async Task<ActionResult> Logout()
+        public async Task<ActionResult> Logout(CancellationToken cancellationToken)
         {
             await _signInManager.SignOutAsync();
 
@@ -53,15 +53,12 @@ namespace API.Controllers
         }
 
         [HttpGet("user-info")]
-        public async Task<ActionResult> GetUserInfo()
+        public async Task<ActionResult> GetUserInfo(CancellationToken cancellationToken)
         {
             if (User.Identity is not null && !User.Identity.IsAuthenticated)
                 return NoContent();
 
             var user = await _signInManager.UserManager.GetUserByEmailWithAddress(User);
-
-            ////var user = await _signInManager.UserManager.Users
-            ////                               .FirstOrDefaultAsync(x => x.Email == User.FindFirstValue(ClaimTypes.Email));
 
             if (user is null)
                 return Unauthorized();
@@ -84,7 +81,7 @@ namespace API.Controllers
 
         [Authorize]
         [HttpPost("address")]
-        public async Task<ActionResult<AddressDto>> CreateOrUpdateAddress(AddressDto addressDto)
+        public async Task<ActionResult<AddressDto>> CreateOrUpdateAddress(AddressDto addressDto, CancellationToken cancellationToken)
         {
             var user = await _signInManager.UserManager.GetUserByEmailWithAddress(User);
 
