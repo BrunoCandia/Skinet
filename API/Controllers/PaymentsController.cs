@@ -43,9 +43,9 @@ namespace API.Controllers
 
         [Authorize]
         [HttpPost("{shoppingCartId}")]
-        public async Task<ActionResult<ShoppingCart>> CreateOrUpdatePaymentIntent([FromRoute] string shoppingCartId)
+        public async Task<ActionResult<ShoppingCart>> CreateOrUpdatePaymentIntent([FromRoute] string shoppingCartId, CancellationToken cancellationToken)
         {
-            var shoppingCart = await _paymentService.CreateOrUpdatePaymentIntentAsync(shoppingCartId);
+            var shoppingCart = await _paymentService.CreateOrUpdatePaymentIntentAsync(shoppingCartId, cancellationToken);
 
             if (shoppingCart is null)
             {
@@ -56,9 +56,9 @@ namespace API.Controllers
         }
 
         [HttpGet("delivery-methods")]
-        public async Task<ActionResult<IReadOnlyList<DeliveryMethod>>> GetDeliveryMethods()
+        public async Task<ActionResult<IReadOnlyList<DeliveryMethod>>> GetDeliveryMethods(CancellationToken cancellationToken)
         {
-            var deliveryMethods = await _unitOfWork.Repository<DeliveryMethod>().GetAllAsync();
+            var deliveryMethods = await _unitOfWork.Repository<DeliveryMethod>().GetAllAsync(cancellationToken);
 
             if (deliveryMethods is null || !deliveryMethods.Any())
             {
@@ -69,11 +69,11 @@ namespace API.Controllers
         }
 
         [HttpPost("webhook")]
-        public async Task<IActionResult> StripeWebhook()
+        public async Task<IActionResult> StripeWebhook(CancellationToken cancellationToken)
         {
             _logger.LogInformation("StripeWebhook started");
 
-            var json = await new StreamReader(Request.Body).ReadToEndAsync();
+            var json = await new StreamReader(Request.Body).ReadToEndAsync(cancellationToken);
 
             try
             {
@@ -84,7 +84,7 @@ namespace API.Controllers
                     return BadRequest("Invalid event data");
                 }
 
-                await HandlePaymentIntentSucceededAsync(intent);
+                await HandlePaymentIntentSucceededAsync(intent, cancellationToken);
 
                 _logger.LogInformation("HandlePaymentIntentSucceededAsync executed succesfully");
 
@@ -121,13 +121,13 @@ namespace API.Controllers
             }
         }
 
-        private async Task HandlePaymentIntentSucceededAsync(PaymentIntent intent)
+        private async Task HandlePaymentIntentSucceededAsync(PaymentIntent intent, CancellationToken cancellationToken)
         {
             if (intent.Status == "succeeded")
             {
                 var spec = new OrderSpecification(intent.Id, true);
 
-                var order = await _unitOfWork.Repository<Order>().GetEntityWithSpecAsync(spec);
+                var order = await _unitOfWork.Repository<Order>().GetEntityWithSpecAsync(spec, cancellationToken);
 
                 if (order is null)
                 {
@@ -145,7 +145,7 @@ namespace API.Controllers
                     order.Status = OrderStatus.PaymentReceived;
                 }
 
-                await _unitOfWork.CompleteAsync();
+                await _unitOfWork.CompleteAsync(cancellationToken);
 
                 // SignalR to notify the user in the client side
                 var connectionId = NotificationHub.GetConnectionIdByEmail(order.BuyerEmail);
@@ -153,7 +153,7 @@ namespace API.Controllers
 
                 if (!string.IsNullOrWhiteSpace(connectionId))
                 {
-                    await _hubContext.Clients.Client(connectionId).SendAsync("OrderCompleteNotification", order.ToDto());
+                    await _hubContext.Clients.Client(connectionId).SendAsync("OrderCompleteNotification", order.ToDto(), cancellationToken);
                     Console.WriteLine("OrderCompleteNotification sent to the client" + order.ToDto());
                 }
             }

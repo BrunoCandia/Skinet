@@ -14,9 +14,9 @@ namespace API.Controllers
         }
 
         [HttpGet("{code}")]
-        public async Task<ActionResult<CouponDto>> ValidateCoupon(string code)
+        public async Task<ActionResult<CouponDto>> ValidateCoupon(string code, CancellationToken cancellationToken)
         {
-            var coupon = await _couponService.GetCouponFromPromoCodeAsync(code);
+            var coupon = await _couponService.GetCouponFromPromoCodeAsync(code, cancellationToken);
 
             if (coupon == null) return BadRequest("Invalid voucher code");
 

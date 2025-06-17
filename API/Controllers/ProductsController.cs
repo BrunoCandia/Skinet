@@ -22,18 +22,18 @@ namespace API.Controllers
 
         [Cache(60)]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts([FromQuery] ProductSpecParams productSpecParams)
+        public async Task<ActionResult<IEnumerable<Product>>> GetProducts([FromQuery] ProductSpecParams productSpecParams, CancellationToken cancellationToken)
         {
             var spec = new ProductFilterSortPaginationSpecification(productSpecParams);
 
-            return await CreatePagedResult(_unitOfWork.Repository<Product>(), spec, productSpecParams.PageIndex, productSpecParams.PageSize);
+            return await CreatePagedResult(_unitOfWork.Repository<Product>(), spec, productSpecParams.PageIndex, productSpecParams.PageSize, cancellationToken);
         }
 
         [Cache(60)]
         [HttpGet("{id:Guid}")]
-        public async Task<ActionResult<Product>> GetProduct(Guid id)
+        public async Task<ActionResult<Product>> GetProduct(Guid id, CancellationToken cancellationToken)
         {
-            var product = await _unitOfWork.Repository<Product>().GetByIdAsync(id);
+            var product = await _unitOfWork.Repository<Product>().GetByIdAsync(id, cancellationToken);
 
             if (product is null)
             {
@@ -46,16 +46,16 @@ namespace API.Controllers
         [InvalidateCache("api/products|")]
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        public async Task<ActionResult<Product>> CreateProduct(Product product)
+        public async Task<ActionResult<Product>> CreateProduct(Product product, CancellationToken cancellationToken)
         {
             if (product is null)
             {
                 return BadRequest();
             }
 
-            await _unitOfWork.Repository<Product>().AddAsync(product);
+            await _unitOfWork.Repository<Product>().AddAsync(product, cancellationToken);
 
-            if (await _unitOfWork.CompleteAsync())
+            if (await _unitOfWork.CompleteAsync(cancellationToken))
             {
                 return CreatedAtAction("GetProduct", new { id = product.Id }, product);
             }
@@ -66,16 +66,16 @@ namespace API.Controllers
         [InvalidateCache("api/products|")]
         [Authorize(Roles = "Admin")]
         [HttpPut("{id:Guid}")]
-        public async Task<ActionResult> UpdateProduct(Guid id, Product product)
+        public async Task<ActionResult> UpdateProduct(Guid id, Product product, CancellationToken cancellationToken)
         {
-            if (product.Id != id || !await ProductExistsAsync(id))
+            if (product.Id != id || !await ProductExistsAsync(id, cancellationToken))
             {
                 return BadRequest("Cannot update this product");
             }
 
             _unitOfWork.Repository<Product>().Update(product);
 
-            if (await _unitOfWork.CompleteAsync())
+            if (await _unitOfWork.CompleteAsync(cancellationToken))
             {
                 return NoContent();
             }
@@ -86,9 +86,9 @@ namespace API.Controllers
         [InvalidateCache("api/products|")]
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id:Guid}")]
-        public async Task<ActionResult> DeleteProduct(Guid id)
+        public async Task<ActionResult> DeleteProduct(Guid id, CancellationToken cancellationToken)
         {
-            var product = await _unitOfWork.Repository<Product>().GetByIdAsync(id);
+            var product = await _unitOfWork.Repository<Product>().GetByIdAsync(id, cancellationToken);
 
             if (product is null)
             {
@@ -97,7 +97,7 @@ namespace API.Controllers
 
             _unitOfWork.Repository<Product>().Delete(product);
 
-            if (await _unitOfWork.CompleteAsync())
+            if (await _unitOfWork.CompleteAsync(cancellationToken))
             {
                 return NoContent();
             }
@@ -107,29 +107,29 @@ namespace API.Controllers
 
         [Cache(10000)]
         [HttpGet("brands")]
-        public async Task<ActionResult<IReadOnlyList<string>>> GetBrands()
+        public async Task<ActionResult<IReadOnlyList<string>>> GetBrands(CancellationToken cancellationToken)
         {
             var spec = new BrandListSpecification();
 
-            var brands = await _unitOfWork.Repository<Product>().GetEntitiesWithSpecAsync(spec);
+            var brands = await _unitOfWork.Repository<Product>().GetEntitiesWithSpecAsync(spec, cancellationToken);
 
             return Ok(brands);
         }
 
         [Cache(10000)]
         [HttpGet("types")]
-        public async Task<ActionResult<IReadOnlyList<string>>> GetTypes()
+        public async Task<ActionResult<IReadOnlyList<string>>> GetTypes(CancellationToken cancellationToken)
         {
             var spec = new TypeListSpecification();
 
-            var types = await _unitOfWork.Repository<Product>().GetEntitiesWithSpecAsync(spec);
+            var types = await _unitOfWork.Repository<Product>().GetEntitiesWithSpecAsync(spec, cancellationToken);
 
             return Ok(types);
         }
 
-        private async Task<bool> ProductExistsAsync(Guid id)
+        private async Task<bool> ProductExistsAsync(Guid id, CancellationToken cancellationToken)
         {
-            return await _unitOfWork.Repository<Product>().ExistsAsync(id);
+            return await _unitOfWork.Repository<Product>().ExistsAsync(id, cancellationToken);
         }
 
         #region Without Unit of Work

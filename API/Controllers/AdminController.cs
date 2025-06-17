@@ -21,19 +21,19 @@ namespace API.Controllers
         }
 
         [HttpGet("orders")]
-        public async Task<ActionResult<IReadOnlyList<OrderDto>>> GetOrders([FromQuery] OrderSpecParams orderSpecParams)
+        public async Task<ActionResult<IReadOnlyList<OrderDto>>> GetOrders([FromQuery] OrderSpecParams orderSpecParams, CancellationToken cancellationToken)
         {
             var spec = new OrderSpecification(orderSpecParams);
 
-            return await CreatePagedResult(_unitOfWork.Repository<Order>(), spec, orderSpecParams.PageIndex, orderSpecParams.PageSize, order => order.ToDto());
+            return await CreatePagedResult(_unitOfWork.Repository<Order>(), spec, orderSpecParams.PageIndex, orderSpecParams.PageSize, order => order.ToDto(), cancellationToken);
         }
 
         [HttpGet("orders/{id:Guid}")]
-        public async Task<ActionResult<OrderDto>> GetOrderById(Guid id)
+        public async Task<ActionResult<OrderDto>> GetOrderById(Guid id, CancellationToken cancellationToken)
         {
             var spec = new OrderSpecification(id);
 
-            var order = await _unitOfWork.Repository<Order>().GetEntityWithSpecAsync(spec);
+            var order = await _unitOfWork.Repository<Order>().GetEntityWithSpecAsync(spec, cancellationToken);
 
             if (order is null)
             {
@@ -44,11 +44,11 @@ namespace API.Controllers
         }
 
         [HttpPost("orders/refund/{id:Guid}")]
-        public async Task<ActionResult<OrderDto>> RefundOrder(Guid id)
+        public async Task<ActionResult<OrderDto>> RefundOrder(Guid id, CancellationToken cancellationToken)
         {
             var spec = new OrderSpecification(id);
 
-            var order = await _unitOfWork.Repository<Order>().GetEntityWithSpecAsync(spec);
+            var order = await _unitOfWork.Repository<Order>().GetEntityWithSpecAsync(spec, cancellationToken);
 
             if (order is null)
             {
@@ -60,13 +60,13 @@ namespace API.Controllers
                 return BadRequest("Payment not received for this order");
             }
 
-            var result = await _paymentService.RefundPaymentAsync(order.PaymentIntentId);
+            var result = await _paymentService.RefundPaymentAsync(order.PaymentIntentId, cancellationToken);
 
             if (result == "succeeded")
             {
                 order.Status = OrderStatus.Refunded;
 
-                await _unitOfWork.CompleteAsync();
+                await _unitOfWork.CompleteAsync(cancellationToken);
 
                 return Ok(order.ToDto());
             }

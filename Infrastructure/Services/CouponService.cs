@@ -5,7 +5,7 @@ namespace Infrastructure.Services
 {
     public class CouponService : ICouponService
     {
-        public async Task<Core.Entities.Coupon?> GetCouponFromPromoCodeAsync(string code)
+        public async Task<Core.Entities.Coupon?> GetCouponFromPromoCodeAsync(string code, CancellationToken cancellationToken = default)
         {
             var promotionService = new PromotionCodeService();
 

@@ -2,6 +2,7 @@
 using Core.Interfaces;
 using StackExchange.Redis;
 using System.Text.Json;
+using System.Threading;
 
 namespace Infrastructure.Services
 {
@@ -16,12 +17,13 @@ namespace Infrastructure.Services
             _database = _redis.GetDatabase();
         }
 
-        public async Task<bool> DeleteShoppingCartAsync(string key)
+        public async Task<bool> DeleteShoppingCartAsync(string key, CancellationToken cancellationToken = default)
         {
+            // StackExchange.Redis does not support cancellation tokens directly
             return await _database.KeyDeleteAsync(key);
         }
 
-        public async Task<ShoppingCart?> GetShoppingCartAsync(string key)
+        public async Task<ShoppingCart?> GetShoppingCartAsync(string key, CancellationToken cancellationToken = default)
         {
             var data = await _database.StringGetAsync(key);
 
@@ -33,7 +35,7 @@ namespace Infrastructure.Services
             return JsonSerializer.Deserialize<ShoppingCart>(data!);
         }
 
-        public async Task<ShoppingCart?> SetShoppingCartAsync(ShoppingCart shoppingCart)
+        public async Task<ShoppingCart?> SetShoppingCartAsync(ShoppingCart shoppingCart, CancellationToken cancellationToken = default)
         {
             var isCreated = await _database.StringSetAsync(shoppingCart.Id, JsonSerializer.Serialize(shoppingCart), TimeSpan.FromDays(30));
 
@@ -42,7 +44,7 @@ namespace Infrastructure.Services
                 return null;
             }
 
-            return await GetShoppingCartAsync(shoppingCart.Id);
+            return await GetShoppingCartAsync(shoppingCart.Id, cancellationToken);
         }
     }
 }
