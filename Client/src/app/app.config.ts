@@ -1,4 +1,5 @@
-import { APP_INITIALIZER, ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+// import { APP_INITIALIZER, ApplicationConfig, inject, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, inject, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
@@ -39,11 +40,15 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideAnimationsAsync(),
     provideHttpClient(withInterceptors([errorInterceptor, loadingInterceptor, authInterceptor])),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: initializeApp,
-      multi: true,
-      deps: [InitService]
-    }
+    provideAppInitializer(() => {
+      const initializerFn = (initializeApp)(inject(InitService));
+      return initializerFn();
+    })
+    // // {
+    // //   provide: APP_INITIALIZER,
+    // //   useFactory: initializeApp,
+    // //   multi: true,
+    // //   deps: [InitService]
+    // // }
   ]
 };
