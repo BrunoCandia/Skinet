@@ -1,4 +1,5 @@
-import { CurrencyPipe, Location, NgIf } from '@angular/common';
+// import { CurrencyPipe, Location, NgIf } from '@angular/common';
+import { CurrencyPipe, Location } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
@@ -12,7 +13,8 @@ import { StripeService } from '../../../core/services/stripe.service';
 
 @Component({
   selector: 'app-order-summary',
-  imports: [RouterLink, MatButton, MatFormField, MatLabel, MatInput, MatIcon, FormsModule, CurrencyPipe, NgIf],
+  // imports: [RouterLink, MatButton, MatFormField, MatLabel, MatInput, MatIcon, FormsModule, CurrencyPipe, NgIf],
+  imports: [RouterLink, MatButton, MatFormField, MatLabel, MatInput, MatIcon, FormsModule, CurrencyPipe],
   templateUrl: './order-summary.component.html',
   styleUrl: './order-summary.component.scss'
 })
