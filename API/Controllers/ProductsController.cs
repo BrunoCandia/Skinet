@@ -1,4 +1,6 @@
-﻿using API.RequestHelper;
+﻿using API.DTOs;
+using API.Extensions;
+using API.RequestHelper;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Specifications;
@@ -22,16 +24,16 @@ namespace API.Controllers
 
         [Cache(60)]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts([FromQuery] ProductSpecParams productSpecParams, CancellationToken cancellationToken)
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts([FromQuery] ProductSpecParams productSpecParams, CancellationToken cancellationToken)
         {
             var spec = new ProductFilterSortPaginationSpecification(productSpecParams);
 
-            return await CreatePagedResult(_unitOfWork.Repository<Product>(), spec, productSpecParams.PageIndex, productSpecParams.PageSize, cancellationToken);
+            return await CreatePagedResult(_unitOfWork.Repository<Product>(), spec, productSpecParams.PageIndex, productSpecParams.PageSize, product => product.ToDto(), cancellationToken);
         }
 
         [Cache(60)]
         [HttpGet("{id:Guid}")]
-        public async Task<ActionResult<Product>> GetProduct(Guid id, CancellationToken cancellationToken)
+        public async Task<ActionResult<ProductDto>> GetProduct(Guid id, CancellationToken cancellationToken)
         {
             var product = await _unitOfWork.Repository<Product>().GetByIdAsync(id, cancellationToken);
 
@@ -40,13 +42,13 @@ namespace API.Controllers
                 return NotFound();
             }
 
-            return Ok(product);
+            return Ok(product.ToDto());
         }
 
         [InvalidateCache("api/products|")]
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        public async Task<ActionResult<Product>> CreateProduct(Product product, CancellationToken cancellationToken)
+        public async Task<ActionResult<ProductDto>> CreateProduct(Product product, CancellationToken cancellationToken)
         {
             if (product is null)
             {
@@ -57,7 +59,7 @@ namespace API.Controllers
 
             if (await _unitOfWork.CompleteAsync(cancellationToken))
             {
-                return CreatedAtAction("GetProduct", new { id = product.Id }, product);
+                return CreatedAtAction("GetProduct", new { id = product.Id }, product.ToDto());
             }
 
             return BadRequest("Cannot create product");

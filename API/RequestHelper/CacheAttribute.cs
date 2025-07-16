@@ -39,13 +39,19 @@ namespace API.RequestHelper
 
             var executedContext = await next();
 
-            if (executedContext.Result is ObjectResult objectResult && objectResult.Value is not null)
+            if (executedContext.Result is OkObjectResult okObjectResult && okObjectResult.Value is not null)
             {
                 // Cache the response
-                await cacheService.SetCacheResponseAsync(cacheKey, objectResult.Value, TimeSpan.FromSeconds(_timeToLiveInSeconds));
+                await cacheService.SetCacheResponseAsync(cacheKey, okObjectResult.Value, TimeSpan.FromSeconds(_timeToLiveInSeconds));
             }
         }
 
+        /// <summary>
+        /// The request sent from the client can be: 'https://localhost:7130/api/products?brands=Angular&sort=name&pageSize=10&pageIndex=1'
+        /// and the generated key wuold be: '/api/products|brands-Angular|pageIndex-1|pageSize-10|sort-name'
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns>The generated cache key</returns>
         private static string GenerateCacheKey(HttpRequest request)
         {
             var keyBuilder = new StringBuilder();
