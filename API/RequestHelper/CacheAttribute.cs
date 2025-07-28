@@ -48,7 +48,7 @@ namespace API.RequestHelper
 
         /// <summary>
         /// The request sent from the client can be: 'https://localhost:7130/api/products?brands=Angular&sort=name&pageSize=10&pageIndex=1'
-        /// and the generated key wuold be: '/api/products|brands-Angular|pageIndex-1|pageSize-10|sort-name'
+        /// and the generated key would be: '/api/products|brands-Angular|pageIndex-1|pageSize-10|sort-name'
         /// </summary>
         /// <param name="request"></param>
         /// <returns>The generated cache key</returns>

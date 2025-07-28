@@ -26,6 +26,8 @@ namespace API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts([FromQuery] ProductSpecParams productSpecParams, CancellationToken cancellationToken)
         {
+            await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
+
             var spec = new ProductFilterSortPaginationSpecification(productSpecParams);
 
             return await CreatePagedResult(_unitOfWork.Repository<Product>(), spec, productSpecParams.PageIndex, productSpecParams.PageSize, product => product.ToDto(), cancellationToken);

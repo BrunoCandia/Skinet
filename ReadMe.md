@@ -1,3 +1,12 @@
+## Flow to show
+
+### a) Cache in ProductController
+1. Do not log.
+2. Run SkyNet 2 to pupulate the cache.
+3. Log in as Admin.
+4. Add a new product.
+5. Go to the grid view.
+
 # Skinet E-Commerce API
 
 A modern e-commerce API built with .NET 9, Entity Framework Core, Redis, and Stripe integration.
