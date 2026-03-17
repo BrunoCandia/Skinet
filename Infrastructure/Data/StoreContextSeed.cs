@@ -19,7 +19,7 @@ namespace Infrastructure.Data
 
             if (!await userManager.Users.AnyAsync(x => x.UserName == "admin@test.com"))
             {
-                Console.WriteLine("Seeding users");
+                Console.WriteLine("Seeding admin user");
 
                 var user = new User
                 {
@@ -30,6 +30,27 @@ namespace Infrastructure.Data
                 await userManager.CreateAsync(user, "Pa$$w0rd");
 
                 await userManager.AddToRoleAsync(user, "Admin");
+            }
+
+            if (!await roleManager.RoleExistsAsync("Customer"))
+            {
+                Console.WriteLine("Seeding Customer role");
+                await roleManager.CreateAsync(new IdentityRole("Customer"));
+            }
+
+            if (!await userManager.Users.AnyAsync(x => x.UserName == "tom@test.com"))
+            {
+                Console.WriteLine("Seeding users");
+
+                var user = new User
+                {
+                    UserName = "tom@test.com",
+                    Email = "tom@test.com",
+                };
+
+                await userManager.CreateAsync(user, "Pa$$w0rd");
+
+                await userManager.AddToRoleAsync(user, "Customer");
             }
 
             var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);

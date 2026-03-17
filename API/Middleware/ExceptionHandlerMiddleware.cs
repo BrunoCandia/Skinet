@@ -27,36 +27,41 @@ namespace API.Middleware
             {
                 // TODO: Handle this in the client side
 
-                // Log the exception as per S6667 diagnostic
-                _logger.LogInformation(ex, "Request was cancelled by the client.");
-
-                // 499 is unofficial, but used for client cancellations
-                if (!httpContext.Response.HasStarted)
-                {
-                    httpContext.Response.StatusCode = 499;
-                    await httpContext.Response.WriteAsync("The request was cancelled by the client.");
-                }
+                await HandleOperationCanceledException(httpContext, ex);
             }
             catch (Exception ex)
             {
-                await HandleException(httpContext, ex, _environment, _logger);
+                await HandleException(httpContext, ex);
             }
         }
 
-        private static Task HandleException(HttpContext httpContext, Exception ex, IHostEnvironment environment, ILogger logger)
+        private async Task HandleOperationCanceledException(HttpContext httpContext, OperationCanceledException ex)
+        {
+            // Log the exception as per S6667 diagnostic
+            _logger.LogInformation(ex, "Request was cancelled by the client.");
+
+            // 499 is unofficial, but used for client cancellations
+            if (!httpContext.Response.HasStarted)
+            {
+                httpContext.Response.StatusCode = 499;
+                await httpContext.Response.WriteAsync("The request was cancelled by the client.");
+            }
+        }
+
+        private async Task HandleException(HttpContext httpContext, Exception ex)
         {
             if (httpContext.Response.HasStarted)
             {
-                logger.LogWarning("The response has already started, the error handler will not be executed.");
-                return Task.CompletedTask;
+                _logger.LogWarning("The response has already started, the error handler will not be executed.");
+                await Task.CompletedTask;
             }
 
-            logger.LogError(ex, "An unhandled exception occurred.");
+            _logger.LogError(ex, "An unhandled exception occurred.");
 
             httpContext.Response.ContentType = "application/json";
             httpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-            var response = environment.IsDevelopment()
+            var response = _environment.IsDevelopment()
                     ? new ApiErrorResponse(httpContext.Response.StatusCode, ex.Message, ex.StackTrace)
                     : new ApiErrorResponse(httpContext.Response.StatusCode, ex.Message, "Internal server error!!!");
 
@@ -67,7 +72,7 @@ namespace API.Middleware
 
             var json = JsonSerializer.Serialize(response, options);
 
-            return httpContext.Response.WriteAsync(json);
+            await httpContext.Response.WriteAsync(json);
         }
     }
 }
