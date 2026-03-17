@@ -1,3 +1,23 @@
+1-Run the backend
+dotnet run --project API or from Visual Studio set API as startup project and run it
+
+2-Run the client
+cd Client and then "ng serve"
+
+3-Run redis locally
+Go to the root folder and run "docker compose up -d" 
+
+4-Stop redis locally
+Go to the root folder and run "docker compose down"
+
+### Connecting to SQL Server running locally using SQL Server Management Studio (SSMS)
+
+- Server Type: Database Engine
+- Server: localhost
+- Authentication: Windows Authentication
+	- User name: Owner-PC\Owner 
+	- Password:
+
 User
 Tom@test.com
 Pa$$w0rd
