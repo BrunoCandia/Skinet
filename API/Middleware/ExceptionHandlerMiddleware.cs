@@ -8,11 +8,13 @@ namespace API.Middleware
     {
         private readonly RequestDelegate _next;
         private readonly IHostEnvironment _environment;
+        private readonly ILogger<ExceptionHandlerMiddleware> _logger;
 
-        public ExceptionHandlerMiddleware(IHostEnvironment environment, RequestDelegate next)
+        public ExceptionHandlerMiddleware(IHostEnvironment environment, RequestDelegate next, ILogger<ExceptionHandlerMiddleware> logger)
         {
             _environment = environment;
             _next = next;
+            _logger = logger;
         }
 
         public async Task InvokeAsync(HttpContext httpContext)
@@ -21,14 +23,36 @@ namespace API.Middleware
             {
                 await _next(httpContext);
             }
+            catch (OperationCanceledException ex)
+            {
+                // TODO: Handle this in the client side
+
+                // Log the exception as per S6667 diagnostic
+                _logger.LogInformation(ex, "Request was cancelled by the client.");
+
+                // 499 is unofficial, but used for client cancellations
+                if (!httpContext.Response.HasStarted)
+                {
+                    httpContext.Response.StatusCode = 499;
+                    await httpContext.Response.WriteAsync("The request was cancelled by the client.");
+                }
+            }
             catch (Exception ex)
             {
-                await HandleException(httpContext, ex, _environment);
+                await HandleException(httpContext, ex, _environment, _logger);
             }
         }
 
-        private static Task HandleException(HttpContext httpContext, Exception ex, IHostEnvironment environment)
+        private static Task HandleException(HttpContext httpContext, Exception ex, IHostEnvironment environment, ILogger logger)
         {
+            if (httpContext.Response.HasStarted)
+            {
+                logger.LogWarning("The response has already started, the error handler will not be executed.");
+                return Task.CompletedTask;
+            }
+
+            logger.LogError(ex, "An unhandled exception occurred.");
+
             httpContext.Response.ContentType = "application/json";
             httpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
